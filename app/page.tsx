@@ -1,65 +1,152 @@
-import Image from "next/image";
+import React from 'react';
+import ReportView from '@/components/ReportView';
+import { AteraClient } from '@/lib/atera-client';
 
-export default function Home() {
+const MOCK_DATA = {
+  customers: [
+    { "CustomerID": 1, "CustomerName": "Acme Corporation", "CustomerEmail": "contact@acme.com", "CreatedOn": "2024-01-15T08:00:00Z" },
+    { "CustomerID": 2, "CustomerName": "Wayne Enterprises", "CustomerEmail": "it@wayne.com", "CreatedOn": "2024-03-22T10:30:00Z" },
+    { "CustomerID": 3, "CustomerName": "Stark Industries", "CustomerEmail": "support@stark.com", "CreatedOn": "2024-05-10T14:15:00Z" },
+    { "CustomerID": 4, "CustomerName": "Oscorp Technologies", "CustomerEmail": "info@oscorp.com", "CreatedOn": "2024-06-01T09:00:00Z" },
+    { "CustomerID": 5, "CustomerName": "Umbrella Corp", "CustomerEmail": "bio@umbrella.com", "CreatedOn": "2024-06-15T11:45:00Z" }
+  ],
+  agents: [
+    { "AgentID": 101, "MachineName": "DESKTOP-R8A21", "OS": "Windows 11 Pro", "CustomerID": 1, "CustomerName": "Acme Corporation", "Online": true, "DeviceType": "Workstation", "IPAddress": "192.168.1.15" },
+    { "AgentID": 102, "MachineName": "SERVER-SQL01", "OS": "Windows Server 2022", "CustomerID": 1, "CustomerName": "Acme Corporation", "Online": true, "DeviceType": "Server", "IPAddress": "192.168.1.10" },
+    { "AgentID": 103, "MachineName": "ACME-LAP-02", "OS": "macOS Sequoia", "CustomerID": 1, "CustomerName": "Acme Corporation", "Online": false, "DeviceType": "Workstation", "IPAddress": "192.168.1.52" },
+    { "AgentID": 104, "MachineName": "WAYNE-DC01", "OS": "Windows Server 2019", "CustomerID": 2, "CustomerName": "Wayne Enterprises", "Online": true, "DeviceType": "Server", "IPAddress": "10.0.1.10" },
+    { "AgentID": 105, "MachineName": "WAYNE-WORK-01", "OS": "Windows 10 Pro", "CustomerID": 2, "CustomerName": "Wayne Enterprises", "Online": true, "DeviceType": "Workstation", "IPAddress": "10.0.1.45" },
+    { "AgentID": 106, "MachineName": "STARK-JARVIS", "OS": "Ubuntu 24.04 LTS", "CustomerID": 3, "CustomerName": "Stark Industries", "Online": true, "DeviceType": "Server", "IPAddress": "172.16.5.5" },
+    { "AgentID": 107, "MachineName": "STARK-LAP-10", "OS": "Windows 11 Pro", "CustomerID": 3, "CustomerName": "Stark Industries", "Online": true, "DeviceType": "Workstation", "IPAddress": "172.16.5.21" }
+  ],
+  tickets: [
+    { "TicketID": 2001, "TicketTitle": "SQL Database replication failure", "TicketStatus": "Open", "TicketPriority": "Critical", "CreatedDate": "2026-07-30T09:00:00Z", "CustomerID": 1, "CustomerName": "Acme Corporation" },
+    { "TicketID": 2002, "TicketTitle": "Outlook won't sync email", "TicketStatus": "Open", "TicketPriority": "Medium", "CreatedDate": "2026-07-30T10:15:00Z", "CustomerID": 2, "CustomerName": "Wayne Enterprises" },
+    { "TicketID": 2003, "TicketTitle": "New hire workstation deployment", "TicketStatus": "Pending", "TicketPriority": "Low", "CreatedDate": "2026-07-29T14:00:00Z", "CustomerID": 3, "CustomerName": "Stark Industries" },
+    { "TicketID": 2004, "TicketTitle": "VPN Connection dropping frequently", "TicketStatus": "Resolved", "TicketPriority": "High", "CreatedDate": "2026-07-29T08:30:00Z", "CustomerID": 1, "CustomerName": "Acme Corporation" },
+    { "TicketID": 2005, "TicketTitle": "Antivirus alert on file server", "TicketStatus": "Open", "TicketPriority": "High", "CreatedDate": "2026-07-30T11:00:00Z", "CustomerID": 4, "CustomerName": "Oscorp Technologies" }
+  ],
+  alerts: [
+    { "AlertID": 5001, "DeviceName": "SERVER-SQL01", "CustomerID": 1, "CustomerName": "Acme Corporation", "Severity": "Critical", "Message": "CPU usage exceeded 95% for 15 minutes", "CreatedDate": "2026-07-30T11:45:00Z" },
+    { "AlertID": 5002, "DeviceName": "WAYNE-DC01", "CustomerID": 2, "CustomerName": "Wayne Enterprises", "Severity": "Warning", "Message": "Low disk space on C:\\ drive (less than 10%)", "CreatedDate": "2026-07-30T12:00:00Z" },
+    { "AlertID": 5003, "DeviceName": "STARK-JARVIS", "CustomerID": 3, "CustomerName": "Stark Industries", "Severity": "Critical", "Message": "Unauthorized SSH login attempt detected", "CreatedDate": "2026-07-30T12:20:00Z" }
+  ],
+  contracts: [
+    { "ContractID": 301, "ContractName": "Premium Managed IT Support", "CustomerID": 1, "CustomerName": "Acme Corporation", "StartDate": "2026-01-01T00:00:00Z", "EndDate": "2027-01-01T00:00:00Z", "ContractType": "Flat Fee" },
+    { "ContractID": 302, "ContractName": "Basic Maintenance Agreement", "CustomerID": 2, "CustomerName": "Wayne Enterprises", "StartDate": "2026-03-01T00:00:00Z", "EndDate": "2027-03-01T00:00:00Z", "ContractType": "Hourly" },
+    { "ContractID": 303, "ContractName": "Gold SLA Agreement", "CustomerID": 3, "CustomerName": "Stark Industries", "StartDate": "2026-05-01T00:00:00Z", "EndDate": "2027-05-01T00:00:00Z", "ContractType": "Flat Fee" }
+  ],
+  workhours: [
+    { "WorkhourID": 401, "TechnicianName": "Keem IT", "LoggedHours": 18.5, "Billable": true, "TicketID": 2001, "CustomerName": "Acme Corporation" },
+    { "WorkhourID": 402, "TechnicianName": "Keem IT", "LoggedHours": 12.0, "Billable": false, "TicketID": 2002, "CustomerName": "Wayne Enterprises" },
+    { "WorkhourID": 403, "TechnicianName": "Somchai Support", "LoggedHours": 8.0, "Billable": true, "TicketID": 2003, "CustomerName": "Stark Industries" }
+  ]
+};
+
+export default async function Page() {
+  let customersData: any = [];
+  let agentsData: any = [];
+  let ticketsData: any = [];
+  let alertsData: any = [];
+  let contractsData: any = [];
+  let workhoursData: any = [];
+  let isMock = false;
+  let errorMsg: string | null = null;
+
+  try {
+    // Attempt parallel data fetches using Promise.allSettled to handle individual failures gracefully
+    const [customersRes, agentsRes, ticketsRes, alertsRes, contractsRes, workhoursRes] = await Promise.allSettled([
+      AteraClient.getCustomers({ page: '1', itemsInPage: '50' }),
+      AteraClient.getAgents({ page: '1', itemsInPage: '50' }),
+      AteraClient.getTickets({ page: '1', itemsInPage: '50' }),
+      AteraClient.getAlerts({ page: '1', itemsInPage: '50' }),
+      AteraClient.getContracts({ page: '1', itemsInPage: '55' }),
+      AteraClient.getWorkhours({ page: '1', itemsInPage: '50' })
+    ]);
+
+    // Extract Customers
+    if (customersRes.status === 'fulfilled') {
+      const val = customersRes.value;
+      customersData = val.items || (Array.isArray(val) ? val : []);
+    } else {
+      throw new Error(`Failed to fetch customers: ${customersRes.reason.message}`);
+    }
+
+    // Extract Agents (Devices)
+    if (agentsRes.status === 'fulfilled') {
+      const val = agentsRes.value;
+      agentsData = val.items || (Array.isArray(val) ? val : []);
+    } else {
+      throw new Error(`Failed to fetch agents: ${agentsRes.reason.message}`);
+    }
+
+    // Extract Tickets
+    if (ticketsRes.status === 'fulfilled') {
+      const val = ticketsRes.value;
+      ticketsData = val.items || (Array.isArray(val) ? val : []);
+    } else {
+      throw new Error(`Failed to fetch tickets: ${ticketsRes.reason.message}`);
+    }
+
+    // Extract Alerts
+    if (alertsRes.status === 'fulfilled') {
+      const val = alertsRes.value;
+      alertsData = val.items || (Array.isArray(val) ? val : []);
+    } else {
+      throw new Error(`Failed to fetch alerts: ${alertsRes.reason.message}`);
+    }
+
+    // Extract Contracts
+    if (contractsRes.status === 'fulfilled') {
+      const val = contractsRes.value;
+      contractsData = val.items || (Array.isArray(val) ? val : []);
+    }
+
+    // Extract Workhours
+    if (workhoursRes.status === 'fulfilled') {
+      const val = workhoursRes.value;
+      workhoursData = val.items || (Array.isArray(val) ? val : []);
+    }
+
+    // fallback if account is empty (eg. fresh trial or empty setup)
+    if (customersData.length === 0 && agentsData.length === 0) {
+      isMock = true;
+      errorMsg = "API returned successfully but database is empty. Showing preview template.";
+      customersData = MOCK_DATA.customers;
+      agentsData = MOCK_DATA.agents;
+      ticketsData = MOCK_DATA.tickets;
+      alertsData = MOCK_DATA.alerts;
+      contractsData = MOCK_DATA.contracts;
+      workhoursData = MOCK_DATA.workhours;
+    }
+
+  } catch (error: any) {
+    isMock = true;
+    errorMsg = error.message || "Atera connection error";
+    
+    // Load fallback preview data
+    customersData = MOCK_DATA.customers;
+    agentsData = MOCK_DATA.agents;
+    ticketsData = MOCK_DATA.tickets;
+    alertsData = MOCK_DATA.alerts;
+    contractsData = MOCK_DATA.contracts;
+    workhoursData = MOCK_DATA.workhours;
+  }
+
+  const reportData = {
+    customers: customersData,
+    agents: agentsData,
+    tickets: ticketsData,
+    alerts: alertsData,
+    contracts: contractsData,
+    workhours: workhoursData
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <ReportView 
+      data={reportData} 
+      isMock={isMock} 
+      errorMsg={errorMsg} 
+    />
   );
 }
