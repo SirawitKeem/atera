@@ -3,9 +3,22 @@
 import React from 'react';
 import { Database, Mail, Phone, Globe, ShieldCheck } from 'lucide-react';
 
-export default function BackCoverPage() {
+interface BackCoverPageProps {
+  pageNumber: number;
+}
+
+export default function BackCoverPage({
+  pageNumber
+}: BackCoverPageProps) {
   return (
-    <div className="a4-page justify-between">
+    <div className="a4-page justify-between"
+      style={{
+        backgroundImage: 'url("/bgdesign.png")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        padding: '12mm 12mm'
+      }}
+    >
       {/* Top Header line */}
       <div className="flex justify-between items-center text-[9px] text-slate-400 font-bold uppercase tracking-widest border-b border-slate-100 pb-2 w-full">
         <span>Atera Systems Executive Report</span>
@@ -51,7 +64,7 @@ export default function BackCoverPage() {
           </p>
           <p className="text-slate-400 mt-0.5">Audit Stamp ID: 87ed8f63-4d1d-4e30</p>
         </div>
-        <span>หน้า 6 จาก 6</span>
+        <span>หน้า {pageNumber} จาก 16</span>
       </div>
     </div>
   );

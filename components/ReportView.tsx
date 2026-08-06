@@ -13,6 +13,10 @@ import WorkhoursPage from './reports/WorkhoursPage';
 import ContractsPage from './reports/ContractsPage';
 import BillingPage from './reports/BillingPage';
 import RiskScorecardPage from './reports/RiskScorecardPage';
+import DetailAssetsPage from './reports/DetailAssetsPage';
+import DetailTicketsPage from './reports/DetailTicketsPage';
+import DetailAlertsPage from './reports/DetailAlertsPage';
+import AppendixPage from './reports/AppendixPage';
 import BackCoverPage from './reports/BackCoverPage';
 
 interface ReportViewProps {
@@ -213,8 +217,33 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         tickets={tickets}
       />
 
-      {/* PAGE 12: BACK COVER */}
-      <BackCoverPage />
+      {/* PAGE 12: DETAILED ASSETS INVENTORY */}
+      <DetailAssetsPage 
+        pageNumber={12}
+        agents={agents}
+      />
+
+      {/* PAGE 13: DETAILED TICKETS LOG */}
+      <DetailTicketsPage 
+        pageNumber={13}
+        tickets={tickets}
+      />
+
+      {/* PAGE 14: DETAILED ALERTS LOG */}
+      <DetailAlertsPage 
+        pageNumber={14}
+        alerts={alerts}
+      />
+
+      {/* PAGE 15: APPENDIX & GLOSSARY */}
+      <AppendixPage 
+        pageNumber={15}
+      />
+
+      {/* PAGE 16: BACK COVER */}
+      <BackCoverPage 
+        pageNumber={16}
+      />
 
     </div>
   );
