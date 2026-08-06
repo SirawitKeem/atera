@@ -29,36 +29,27 @@ export default function BillingPage({
     if (c.RetainerFlatFeeContract?.Rate?.Amount !== undefined) {
       return (c.RetainerFlatFeeContract.Rate.Amount * (c.RetainerFlatFeeContract.Quantity || 1));
     }
-    // Fallback logic for hourly rates (estimate 10 hours of work)
     if (c.HourlyRate || c.hourlyRate) {
       return (c.HourlyRate || c.hourlyRate) * 10;
     }
-    return 150; // standard baseline fee
+    return 0; // No fallback baseline fee
   };
 
-  // Calculate monthly revenue dynamically
+  // Calculate monthly revenue dynamically from active contracts
   const monthlyRevenue = contracts.reduce((sum, c) => sum + getContractValue(c), 0);
 
-  const totalInvoices = contracts.length || customers.length || 0;
+  const totalInvoices = contracts.length;
   const outstandingAmount = 0;
-  const paymentCompliance = 100;
+  const paymentCompliance = contracts.length > 0 ? 100 : 0;
 
   // Build invoice logs dynamically using active contracts data from the API
-  const invoiceLogs = (contracts.length > 0 
-    ? contracts.map((c, idx) => ({
-        id: c.ContractID || idx + 1,
-        name: c.CustomerName || 'Client',
-        amount: getContractValue(c),
-        status: c.Active ? 'Paid' : 'Pending',
-        period: '01 Jul - 31 Jul 2026'
-      }))
-    : customers.map((c, idx) => ({
-        id: idx + 1,
-        name: c.CustomerName || 'Client',
-        amount: 150, // standard baseline rate when no contract is found
-        status: 'Paid',
-        period: '01 Jul - 31 Jul 2026'
-      }))).sort((a, b) => b.amount - a.amount);
+  const invoiceLogs = contracts.map((c, idx) => ({
+    id: c.ContractID || idx + 1,
+    name: c.CustomerName || 'Client',
+    amount: getContractValue(c),
+    status: c.Active ? 'Paid' : 'Pending',
+    period: '01 Jul - 31 Jul 2026'
+  })).sort((a, b) => b.amount - a.amount);
 
   return (
     <div 
@@ -210,6 +201,13 @@ export default function BillingPage({
                     </td>
                   </tr>
                 ))}
+                {invoiceLogs.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-slate-400 font-bold">
+                      ไม่พบข้อมูลสัญญาบริการและใบเรียกเก็บเงินในระบบ API (No active billing contracts found)
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
