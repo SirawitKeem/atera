@@ -32,7 +32,12 @@ interface ReportViewProps {
 }
 
 export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) {
-  const { customers, agents, tickets, alerts, contracts, workhours } = data;
+  const { customers, agents, tickets, alerts: rawAlerts, contracts, workhours } = data;
+
+  // Filter active alerts only (Archived: false)
+  const alerts = isMock 
+    ? rawAlerts 
+    : rawAlerts.filter(a => a.Archived === false || a.archived === false || String(a.Archived).toLowerCase() === 'false');
 
   const handlePrint = () => {
     window.print();

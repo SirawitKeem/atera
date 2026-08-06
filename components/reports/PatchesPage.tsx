@@ -3,13 +3,12 @@
 import React from 'react';
 import { 
   ShieldCheck, 
-  ShieldAlert, 
-  RefreshCw, 
-  Cpu, 
   Terminal,
   Activity,
-  Info,
-  Server
+  Server,
+  Laptop,
+  Cpu,
+  Monitor
 } from 'lucide-react';
 import ReportHeader from './ReportHeader';
 
@@ -25,24 +24,40 @@ export default function PatchesPage({
 
   const totalDevices = agents.length;
   
-  // Calculate patch status metrics
-  const availablePatchesCount = agents.reduce((sum, a) => sum + (a.AvailablePatchesCount || a.patchesCount || (a.Online ? 2 : 0)), 0) || 14;
-  const complianceRate = Math.max(75, 100 - availablePatchesCount);
-  const installedPatchesCount = totalDevices * 18 + 5;
-  const rebootRequiredCount = agents.filter(a => a.RebootPending === true || String(a.RebootPending).toLowerCase() === 'true').length || 1;
+  // OS Distribution calculation based on real agents data
+  const winPcCount = agents.filter(a => {
+    const os = (a.OS || a.os || '').toLowerCase();
+    const type = (a.DeviceType || a.deviceType || '').toLowerCase();
+    return os.includes('win') && !os.includes('server') && !type.includes('server');
+  }).length;
 
-  // OS Compliance calculations
-  const winAgents = agents.filter(a => (a.OS || a.os || '').toLowerCase().includes('win'));
-  const macAgents = agents.filter(a => (a.OS || a.os || '').toLowerCase().includes('mac') || (a.OS || a.os || '').toLowerCase().includes('darwin'));
-  const linuxAgents = agents.filter(a => (a.OS || a.os || '').toLowerCase().includes('linux') || (a.OS || a.os || '').toLowerCase().includes('ubuntu'));
+  const winServerCount = agents.filter(a => {
+    const os = (a.OS || a.os || '').toLowerCase();
+    const type = (a.DeviceType || a.deviceType || '').toLowerCase();
+    return os.includes('server') || type.includes('server');
+  }).length;
 
-  const winPatches = winAgents.reduce((sum, a) => sum + (a.AvailablePatchesCount || 2), 0) || 10;
-  const macPatches = macAgents.reduce((sum, a) => sum + (a.AvailablePatchesCount || 0), 0) || 0;
-  const linuxPatches = linuxAgents.reduce((sum, a) => sum + (a.AvailablePatchesCount || 1), 0) || 4;
+  const linuxCount = agents.filter(a => {
+    const os = (a.OS || a.os || '').toLowerCase();
+    return os.includes('linux') || os.includes('ubuntu') || os.includes('debian');
+  }).length;
 
-  const winCompliance = Math.max(75, 100 - winPatches);
-  const macCompliance = Math.max(90, 100 - macPatches);
-  const linuxCompliance = Math.max(80, 100 - linuxPatches);
+  const macCount = Math.max(0, totalDevices - (winPcCount + winServerCount + linuxCount));
+
+  // Date Formatting helper for reboot time
+  const formatRebootTime = (dateStr: string) => {
+    if (!dateStr) return 'N/A';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      });
+    } catch {
+      return dateStr;
+    }
+  };
 
   // OS Icon Helper
   const getOsIcon = (osName?: string) => {
@@ -76,59 +91,59 @@ export default function PatchesPage({
     >
       {/* Report Header */}
       <ReportHeader 
-        title="Patch Management" 
-        subtitle="OS Security Updates & Patch Compliance | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        title="Patch & System Inventory" 
+        subtitle="Operating Systems and Build Version Compliance Audit | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
       />
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">
         
-        {/* SECTION 1: PATCH KPI CARDS */}
+        {/* SECTION 1: SYSTEM KPI CARDS */}
         <div className="grid grid-cols-4 gap-3 select-none">
-          {/* Compliance Rate */}
+          {/* Total Devices */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Compliance</span>
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Total Devices</span>
+              <Monitor className="h-3.5 w-3.5 text-blue-500" />
             </div>
             <div>
-              <h4 className="text-base font-black text-emerald-600 leading-none">{complianceRate}%</h4>
-              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Updates Installed</p>
+              <h4 className="text-base font-black text-slate-800 leading-none">{totalDevices} Agents</h4>
+              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Total RMM Audited</p>
             </div>
           </div>
 
-          {/* Installed Patches */}
+          {/* Windows PC */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Installed</span>
-              <RefreshCw className="h-3.5 w-3.5 text-blue-500" />
+              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Windows PCs</span>
+              <Laptop className="h-3.5 w-3.5 text-indigo-500" />
             </div>
             <div>
-              <h4 className="text-base font-black text-slate-800 leading-none">{installedPatchesCount}</h4>
-              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Patches Verified</p>
+              <h4 className="text-base font-black text-indigo-600 leading-none">{winPcCount} Nodes</h4>
+              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Workstations Registered</p>
             </div>
           </div>
 
-          {/* Missing Patches */}
+          {/* Windows Servers */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Missing</span>
-              <ShieldAlert className="h-3.5 w-3.5 text-rose-500" />
+              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Servers</span>
+              <Server className="h-3.5 w-3.5 text-emerald-500" />
             </div>
             <div>
-              <h4 className="text-base font-black text-rose-600 leading-none">{availablePatchesCount}</h4>
-              <p className="text-[6.5px] text-rose-400 font-bold uppercase mt-1">Required Updates</p>
+              <h4 className="text-base font-black text-emerald-600 leading-none">{winServerCount} Nodes</h4>
+              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Motherboards & VMs</p>
             </div>
           </div>
 
-          {/* Reboot Pending */}
+          {/* Linux Count */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Reboot Pending</span>
-              <RefreshCw className="h-3.5 w-3.5 text-amber-500 animate-spin" style={{ animationDuration: '6s' }} />
+              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Linux & macOS</span>
+              <Cpu className="h-3.5 w-3.5 text-amber-500" />
             </div>
             <div>
-              <h4 className="text-base font-black text-amber-600 leading-none">{rebootRequiredCount} Nodes</h4>
-              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Restart Required</p>
+              <h4 className="text-base font-black text-amber-600 leading-none">{linuxCount + macCount} Nodes</h4>
+              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Alternative OS</p>
             </div>
           </div>
         </div>
@@ -136,110 +151,88 @@ export default function PatchesPage({
         {/* SECTION 2: CHARTS SIDE-BY-SIDE */}
         <div className="grid grid-cols-2 gap-4 h-[190px] select-none">
           
-          {/* OS Patch Compliance */}
+          {/* OS Distribution */}
           <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-xs flex flex-col justify-between h-[190px]">
             <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-              <Activity className="h-4 w-4 text-blue-500" /> 1. สถิติความสอดคล้องตาม OS (Compliance by Operating System)
+              <Activity className="h-4 w-4 text-blue-500" /> 1. การกระจายของระบบปฏิบัติการ (OS Distribution Breakdown)
             </h4>
             <div className="space-y-3 flex-1 flex flex-col justify-center">
-              {/* Windows Compliance */}
+              {/* Windows PC */}
               <div className="space-y-1">
                 <div className="flex justify-between text-[8.5px] font-bold text-slate-600 leading-none">
-                  <span>Windows Systems Compliance</span>
-                  <span>{winCompliance}% Compliance</span>
+                  <span>Windows Workstation PC</span>
+                  <span>{winPcCount} Nodes ({totalDevices > 0 ? Math.round((winPcCount / totalDevices) * 100) : 0}%)</span>
                 </div>
                 <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full" style={{ width: `${winCompliance}%` }}></div>
+                  <div className="bg-blue-500 h-full rounded-full" style={{ width: `${totalDevices > 0 ? Math.round((winPcCount / totalDevices) * 100) : 0}%` }}></div>
                 </div>
               </div>
-              {/* macOS Compliance */}
+              {/* Windows Server */}
               <div className="space-y-1">
                 <div className="flex justify-between text-[8.5px] font-bold text-slate-600 leading-none">
-                  <span>macOS Apple Compliance</span>
-                  <span>{macCompliance}% Compliance</span>
+                  <span>Windows Servers</span>
+                  <span>{winServerCount} Nodes ({totalDevices > 0 ? Math.round((winServerCount / totalDevices) * 100) : 0}%)</span>
                 </div>
                 <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                  <div className="bg-slate-400 h-full rounded-full" style={{ width: `${macCompliance}%` }}></div>
+                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${totalDevices > 0 ? Math.round((winServerCount / totalDevices) * 100) : 0}%` }}></div>
                 </div>
               </div>
-              {/* Linux Compliance */}
+              {/* Linux / Mac */}
               <div className="space-y-1">
                 <div className="flex justify-between text-[8.5px] font-bold text-slate-600 leading-none">
-                  <span>Linux Systems Compliance</span>
-                  <span>{linuxCompliance}% Compliance</span>
+                  <span>Linux & macOS Systems</span>
+                  <span>{linuxCount + macCount} Nodes ({totalDevices > 0 ? Math.round(((linuxCount + macCount) / totalDevices) * 100) : 0}%)</span>
                 </div>
                 <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${linuxCompliance}%` }}></div>
+                  <div className="bg-amber-500 h-full rounded-full" style={{ width: `${totalDevices > 0 ? Math.round(((linuxCount + macCount) / totalDevices) * 100) : 0}%` }}></div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Missing Patches by Severity */}
+          {/* IT Audit Status Note */}
           <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-xs flex flex-col justify-between h-[190px]">
             <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-              <ShieldAlert className="h-4 w-4 text-blue-500" /> 2. ความรุนแรงของแพทช์ที่ขาดหาย (Missing Patches Severity)
+              <ShieldCheck className="h-4 w-4 text-emerald-500" /> 2. การควบคุมความปลอดภัยระบบ (System Security Policy)
             </h4>
-            <div className="space-y-2 flex-1 flex flex-col justify-center">
-              {/* Critical missing */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-[8px] font-bold text-slate-600 leading-none">
-                  <span>Security & Vulnerability Patches</span>
-                  <span>{Math.round(availablePatchesCount * 0.6)} Patches</span>
-                </div>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-rose-500 h-full rounded-full" style={{ width: '60%' }}></div>
-                </div>
-              </div>
-              {/* Critical Updates */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-[8px] font-bold text-slate-600 leading-none">
-                  <span>Critical Bug Fixes</span>
-                  <span>{Math.round(availablePatchesCount * 0.3)} Patches</span>
-                </div>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-amber-500 h-full rounded-full" style={{ width: '30%' }}></div>
-                </div>
-              </div>
-              {/* Optional Updates */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-[8px] font-bold text-slate-600 leading-none">
-                  <span>Driver & Feature Updates</span>
-                  <span>{Math.max(1, Math.round(availablePatchesCount * 0.1))} Patches</span>
-                </div>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full" style={{ width: '10%' }}></div>
-                </div>
-              </div>
+            <div className="flex-1 flex flex-col justify-center space-y-2.5 text-[9px] text-slate-500 font-medium leading-relaxed">
+              <p>
+                ✓ ระบบทำการตรวจจับหมายเลข <strong>OS Build</strong> และ <strong>OS Version</strong> ของทุกเครื่องที่เชื่อมต่อกับเอเจนต์ RMM โดยอัตโนมัติจาก API
+              </p>
+              <p>
+                ✓ มีการบันทึกประวัติการบูตระบบล่าสุด (Last Reboot Time) ของแต่ละอุปกรณ์ เพื่อติดตามว่าเครื่องใดไม่มีการรีบูตเพื่อรับอัปเดตความปลอดภัยเป็นระยะเวลานาน
+              </p>
+              <p className="text-[8px] bg-slate-50 border border-slate-100 p-2 rounded-lg text-slate-400">
+                หมายเหตุ: ข้อมูล Patch ในหน้าคอนโซล Atera เป็นส่วนการประมวลผลภายใน แผงรายงานนี้จึงมุ่งดึงข้อมูลคุณสมบัติระบบปฏิบัติการจริงจาก Atera API v3 เพื่อประสิทธิภาพความถูกต้องสูงสุด
+              </p>
             </div>
           </div>
 
         </div>
 
-        {/* SECTION 3: PATCH INVENTORY TABLE */}
+        {/* SECTION 3: SYSTEM INVENTORY TABLE */}
         <div className="space-y-1.5 flex-1 flex flex-col justify-end">
           <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 select-none">
-            <Server className="h-3.5 w-3.5 text-blue-500" /> 3. ตารางอุปกรณ์ที่ขาดการอัปเดตระบบปฏิบัติการ (Missing Patches Device List)
+            <Server className="h-3.5 w-3.5 text-blue-500" /> 3. ทะเบียนตรวจเช็ครุ่นระบบปฏิบัติการ (Operating System Build Registry)
           </h3>
           <div className="border border-slate-100 rounded-lg overflow-hidden bg-white/70 backdrop-blur-xs shadow-xs flex-1">
             <table className="min-w-full divide-y divide-slate-100 text-[10px] text-left">
               <thead className="bg-[#0f4c81] text-white font-bold uppercase tracking-wider text-[7.5px]">
                 <tr>
-                  <th className="px-4 py-2 w-[35%]">DEVICE NAME</th>
-                  <th className="px-4 py-2 w-[25%]">OPERATING SYSTEM</th>
-                  <th className="px-4 py-2 text-center w-[15%]">MISSING COUNT</th>
-                  <th className="px-4 py-2 text-center w-[15%]">KB ID / BULLETIN</th>
-                  <th className="px-4 py-2 text-right w-[10%]">REBOOT STATUS</th>
+                  <th className="px-4 py-2 w-[30%]">DEVICE NAME</th>
+                  <th className="px-4 py-2 w-[35%]">OPERATING SYSTEM NAME</th>
+                  <th className="px-4 py-2 text-center w-[12%]">OS BUILD</th>
+                  <th className="px-4 py-2 text-center w-[13%]">LAST REBOOT</th>
+                  <th className="px-4 py-2 text-right w-[10%]">STATUS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-semibold bg-white/50">
-                {agents.map((a, idx) => {
+                {agents.slice(0, 7).map((a, idx) => {
                   const name = a.MachineName || a.name || 'N/A';
                   const os = a.OS || a.os || 'Windows';
-                  const missingCount = a.AvailablePatchesCount || a.patchesCount || (a.Online ? 2 : 0);
-                  const isRebootPending = a.RebootPending === true || String(a.RebootPending).toLowerCase() === 'true' || idx === 2;
-
-                  if (missingCount === 0 && !isRebootPending) return null;
+                  const build = a.OSBuild || a.osBuild || 'N/A';
+                  const reboot = a.LastRebootTime || a.lastReboot || '';
+                  const isOnline = a.Online === true || a.online === true || String(a.Online).toLowerCase() === 'true';
 
                   return (
                     <tr key={idx} className="hover:bg-slate-50/20 transition-colors">
@@ -247,16 +240,16 @@ export default function PatchesPage({
                         {getOsIcon(os)}
                         <span className="truncate max-w-[120px]">{name}</span>
                       </td>
-                      <td className="px-4 py-2 text-slate-400 truncate max-w-[120px]">{os}</td>
-                      <td className="px-4 py-2 text-center text-rose-600 font-extrabold">{missingCount} Patches</td>
-                      <td className="px-4 py-2 text-center font-mono text-slate-500">KB503{415 + idx * 7}</td>
+                      <td className="px-4 py-2 text-slate-500 truncate max-w-[200px]" title={os}>{os}</td>
+                      <td className="px-4 py-2 text-center font-mono text-slate-400">{build}</td>
+                      <td className="px-4 py-2 text-center font-mono text-slate-400">{formatRebootTime(reboot)}</td>
                       <td className="px-4 py-2 text-right">
                         <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[8.5px] font-extrabold border ${
-                          isRebootPending 
-                            ? 'bg-amber-50 text-amber-700 border-amber-200/50' 
-                            : 'bg-emerald-50 text-emerald-700 border-emerald-200/50'
+                          isOnline 
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200/50' 
+                            : 'bg-slate-50 text-slate-400 border-slate-200'
                         }`}>
-                          {isRebootPending ? 'Reboot Required' : 'No Reboot'}
+                          {isOnline ? 'Online' : 'Offline'}
                         </span>
                       </td>
                     </tr>

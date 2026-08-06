@@ -67,8 +67,6 @@ export default function SummaryPage({
   const offlineCount = agents.length - onlineCount;
   
   const criticalAlertsCount = alerts.filter(a => (a.Severity || a.severity || '').toLowerCase() === 'critical').length;
-  const availablePatchesCount = agents.reduce((sum, a) => sum + (a.AvailablePatchesCount || a.patchesCount || (a.Online ? 2 : 0)), 0) || 14;
-  const complianceRate = Math.max(75, 100 - availablePatchesCount);
 
   // 2. Process Customers and sort them by Device Count descending
   const sortedCustomers = customers.map((c, idx) => {
@@ -235,19 +233,19 @@ export default function SummaryPage({
             </div>
           </div>
 
-          {/* Available Patches */}
+          {/* Service Contracts */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[82px]">
             <div className="flex items-start justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block pr-4 truncate">
-                Missing Patches
+                Service Contracts
               </span>
-              <span className="text-[7px] font-bold text-emerald-600 flex-shrink-0">
-                ▼ -5%
+              <span className="text-[7px] font-bold text-indigo-600 flex-shrink-0">
+                ▲ +0%
               </span>
             </div>
             <div>
-              <h4 className="text-xl font-black text-amber-600 leading-none">{availablePatchesCount}</h4>
-              <p className="text-[7px] text-amber-500 font-bold mt-1 uppercase">Required Updates</p>
+              <h4 className="text-xl font-black text-indigo-600 leading-none">{contracts.length}</h4>
+              <p className="text-[7px] text-indigo-500 font-bold mt-1 uppercase">Active SLA Contracts</p>
             </div>
           </div>
         </div>
@@ -416,7 +414,7 @@ export default function SummaryPage({
               </li>
               <li className="flex items-start gap-1.5">
                 <span className="text-slate-500 font-bold flex-shrink-0">✓</span>
-                <span>Patch Compliance อยู่ที่ <strong>{complianceRate}%</strong> โดยมีอัปเดตตกค้าง <strong>{availablePatchesCount} รายการ</strong></span>
+                <span>สัญญาบริการที่เปิดใช้งานอยู่มีจำนวน <strong>{contracts.length} สัญญา</strong> เพื่อรองรับงานดูแลลูกค้า</span>
               </li>
             </ul>
           </div>
@@ -429,7 +427,7 @@ export default function SummaryPage({
             <ul className="text-slate-600 text-[9.5px] space-y-1 list-none pl-1 font-medium">
               <li className="flex items-start gap-1.5">
                 <span className="text-blue-500 font-bold flex-shrink-0">•</span>
-                <span><strong>Install Critical Patches:</strong> สั่งอัปเดตแพทช์ความปลอดภัยเครื่องที่ขาดด่วนเพื่อป้องกันแรนซัมแวร์</span>
+                <span><strong>Audit Operating Systems:</strong> ติดตามตรวจสอบรุ่น Build ของระบบปฏิบัติการอุปกรณ์ให้สอดคล้องตามมาตรฐานความปลอดภัย</span>
               </li>
               <li className="flex items-start gap-1.5">
                 <span className="text-blue-500 font-bold flex-shrink-0">•</span>

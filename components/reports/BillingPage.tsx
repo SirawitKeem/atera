@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { 
-  DollarSign, 
+  Coins, 
   CheckCircle, 
   AlertTriangle, 
   FileText, 
@@ -35,6 +35,18 @@ export default function BillingPage({
     return 0; // No fallback baseline fee
   };
 
+  // Helper function to calculate outstanding balance based on active months elapsed since StartDate
+  const getContractBalance = (c: any) => {
+    const monthlyRate = getContractValue(c);
+    if (c.StartDate) {
+      const start = new Date(c.StartDate);
+      const now = new Date('2026-08-06T00:00:00Z'); // Current context date
+      const months = (now.getFullYear() - start.getFullYear()) * 12 + now.getMonth() - start.getMonth();
+      return monthlyRate * Math.max(1, months);
+    }
+    return monthlyRate;
+  };
+
   // Calculate monthly revenue dynamically from active contracts
   const monthlyRevenue = contracts.reduce((sum, c) => sum + getContractValue(c), 0);
 
@@ -46,7 +58,7 @@ export default function BillingPage({
   const invoiceLogs = contracts.map((c, idx) => ({
     id: c.ContractID || idx + 1,
     name: c.CustomerName || 'Client',
-    amount: getContractValue(c),
+    amount: getContractBalance(c),
     status: c.Active ? 'Paid' : 'Pending',
     period: '01 Jul - 31 Jul 2026'
   })).sort((a, b) => b.amount - a.amount);
@@ -75,10 +87,10 @@ export default function BillingPage({
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Monthly Revenue</span>
-              <DollarSign className="h-3.5 w-3.5 text-emerald-500" />
+              <Coins className="h-3.5 w-3.5 text-emerald-500" />
             </div>
             <div>
-              <h4 className="text-base font-black text-emerald-600 leading-none">${monthlyRevenue.toLocaleString()} USD</h4>
+              <h4 className="text-base font-black text-emerald-600 leading-none">฿{monthlyRevenue.toLocaleString()} THB</h4>
               <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Billed Recurring Revenue</p>
             </div>
           </div>
@@ -102,7 +114,7 @@ export default function BillingPage({
               <AlertTriangle className="h-3.5 w-3.5 text-slate-400" />
             </div>
             <div>
-              <h4 className="text-base font-black text-slate-600 leading-none">${outstandingAmount.toFixed(2)}</h4>
+              <h4 className="text-base font-black text-slate-600 leading-none">฿{outstandingAmount.toFixed(2)}</h4>
               <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Overdue Accounts Receivables</p>
             </div>
           </div>
@@ -136,7 +148,7 @@ export default function BillingPage({
                   <div key={idx} className="space-y-1">
                     <div className="flex justify-between text-[8.5px] font-bold text-slate-600 leading-none">
                       <span>{item.name}</span>
-                      <span>${item.amount.toLocaleString()}</span>
+                      <span>฿{item.amount.toLocaleString()}</span>
                     </div>
                     <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
                       <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${percentage}%` }}></div>
@@ -193,7 +205,7 @@ export default function BillingPage({
                     <td className="px-4 py-2 font-mono text-slate-400">#INV-2026-0{101 + idx}</td>
                     <td className="px-4 py-2 font-bold text-slate-800">{inv.name}</td>
                     <td className="px-4 py-2 text-slate-600 truncate max-w-[200px]" title={inv.period}>{inv.period}</td>
-                    <td className="px-4 py-2 text-center font-mono text-slate-900 font-extrabold">${inv.amount.toLocaleString()} USD</td>
+                    <td className="px-4 py-2 text-center font-mono text-slate-900 font-extrabold">฿{inv.amount.toLocaleString()} THB</td>
                     <td className="px-4 py-2 text-right">
                       <span className="inline-flex items-center rounded px-1.5 py-0.5 text-[8.5px] font-extrabold border bg-emerald-50 text-emerald-700 border-emerald-200/50">
                         {inv.status}
