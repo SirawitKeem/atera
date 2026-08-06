@@ -5,8 +5,10 @@ import { Printer } from 'lucide-react';
 import CoverPage from './reports/CoverPage';
 import SummaryPage from './reports/SummaryPage';
 import DevicesPage from './reports/DevicesPage';
-import TicketsPage from './reports/TicketsPage';
+import HealthPage from './reports/HealthPage';
 import AlertsPage from './reports/AlertsPage';
+import PatchesPage from './reports/PatchesPage';
+import TicketsPage from './reports/TicketsPage';
 import BackCoverPage from './reports/BackCoverPage';
 
 interface ReportViewProps {
@@ -149,8 +151,29 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         contracts={contracts}
       />
 
-      {/* PAGE 4: HELPDESK TICKETS & SLA */}
+      {/* PAGE 4: DEVICE AVAILABILITY & HEALTH */}
+      <HealthPage 
+        pageNumber={4}
+        agents={agents}
+      />
+
+      {/* PAGE 5: ALERT OVERVIEW */}
+      <AlertsPage 
+        pageNumber={5}
+        alerts={alerts}
+        criticalAlerts={criticalAlerts}
+        warningAlerts={warningAlerts}
+      />
+
+      {/* PAGE 6: PATCH MANAGEMENT */}
+      <PatchesPage 
+        pageNumber={6}
+        agents={agents}
+      />
+
+      {/* PAGE 7: TICKET OVERVIEW */}
       <TicketsPage 
+        pageNumber={7}
         tickets={tickets}
         totalTickets={totalTickets}
         openTickets={openTickets}
@@ -158,14 +181,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         criticalTickets={criticalTickets}
       />
 
-      {/* PAGE 5: SECURITY & ALERTS */}
-      <AlertsPage 
-        alerts={alerts}
-        criticalAlerts={criticalAlerts}
-        warningAlerts={warningAlerts}
-      />
-
-      {/* PAGE 6: BACK COVER */}
+      {/* PAGE 8: BACK COVER */}
       <BackCoverPage />
 
     </div>
