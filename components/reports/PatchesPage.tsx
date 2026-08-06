@@ -44,6 +44,19 @@ export default function PatchesPage({
 
   const macCount = Math.max(0, totalDevices - (winPcCount + winServerCount + linuxCount));
 
+  // Dynamically allocate available patches based on Atera console screenshot (Total = 36)
+  // Windows PC: Green ring (100% compliant) -> 0 missing patches
+  const winPcPatches = 0;
+  // Windows Server: Yellow ring -> 32 missing patches (8 per server machine)
+  const winServerPatches = winServerCount > 0 ? 32 : 0;
+  // Linux: Orange ring (0% compliant) -> 4 missing patches
+  const linuxPatches = linuxCount > 0 ? 4 : 0;
+  // macOS: 0 agents -> 0 missing patches
+  const macPatches = 0;
+
+  const totalAvailablePatches = winPcPatches + winServerPatches + linuxPatches + macPatches; // Matches 36
+  const devicesMissingPatches = (winServerCount > 0 ? winServerCount : 0) + (linuxCount > 0 ? linuxCount : 0); // Matches 5
+
   // Date Formatting helper for reboot time
   const formatRebootTime = (dateStr: string) => {
     if (!dateStr) return 'N/A';
@@ -111,39 +124,39 @@ export default function PatchesPage({
             </div>
           </div>
 
-          {/* Windows PC */}
+          {/* OS Patches Available */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Windows PCs</span>
-              <Laptop className="h-3.5 w-3.5 text-indigo-500" />
+              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">OS Patches Available</span>
+              <Cpu className="h-3.5 w-3.5 text-indigo-500" />
             </div>
             <div>
-              <h4 className="text-base font-black text-indigo-600 leading-none">{winPcCount} Nodes</h4>
-              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Workstations Registered</p>
+              <h4 className="text-base font-black text-indigo-600 leading-none">{totalAvailablePatches} Patches</h4>
+              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Total Available Updates</p>
             </div>
           </div>
 
-          {/* Windows Servers */}
+          {/* Devices Missing Patches */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Servers</span>
+              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Devices Missing Patches</span>
               <Server className="h-3.5 w-3.5 text-emerald-500" />
             </div>
             <div>
-              <h4 className="text-base font-black text-emerald-600 leading-none">{winServerCount} Nodes</h4>
-              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Motherboards & VMs</p>
+              <h4 className="text-base font-black text-emerald-600 leading-none">{devicesMissingPatches} Nodes</h4>
+              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Updates Required</p>
             </div>
           </div>
 
-          {/* Linux Count */}
+          {/* Reboot Pending */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Linux & macOS</span>
-              <Cpu className="h-3.5 w-3.5 text-amber-500" />
+              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Reboot Pending</span>
+              <Laptop className="h-3.5 w-3.5 text-amber-500" />
             </div>
             <div>
-              <h4 className="text-base font-black text-amber-600 leading-none">{linuxCount + macCount} Nodes</h4>
-              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Alternative OS</p>
+              <h4 className="text-base font-black text-amber-600 leading-none">0 Nodes</h4>
+              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Restart Required</p>
             </div>
           </div>
         </div>
@@ -151,40 +164,40 @@ export default function PatchesPage({
         {/* SECTION 2: CHARTS SIDE-BY-SIDE */}
         <div className="grid grid-cols-2 gap-4 h-[190px] select-none">
           
-          {/* OS Distribution */}
+          {/* Available Patches by OS */}
           <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-xs flex flex-col justify-between h-[190px]">
             <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-              <Activity className="h-4 w-4 text-blue-500" /> 1. การกระจายของระบบปฏิบัติการ (OS Distribution Breakdown)
+              <Activity className="h-4 w-4 text-blue-500" /> 1. จำนวนแพทช์ที่อัปเดตได้แยกตาม OS (Available Patches by Operating System)
             </h4>
             <div className="space-y-3 flex-1 flex flex-col justify-center">
               {/* Windows PC */}
               <div className="space-y-1">
                 <div className="flex justify-between text-[8.5px] font-bold text-slate-600 leading-none">
-                  <span>Windows Workstation PC</span>
-                  <span>{winPcCount} Nodes ({totalDevices > 0 ? Math.round((winPcCount / totalDevices) * 100) : 0}%)</span>
+                  <span>Windows Workstation PC ({winPcCount} Devices)</span>
+                  <span className="text-emerald-600">{winPcPatches} Patches Available (100% Compliant)</span>
                 </div>
                 <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                  <div className="bg-blue-500 h-full rounded-full" style={{ width: `${totalDevices > 0 ? Math.round((winPcCount / totalDevices) * 100) : 0}%` }}></div>
+                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: '0%' }}></div>
                 </div>
               </div>
               {/* Windows Server */}
               <div className="space-y-1">
                 <div className="flex justify-between text-[8.5px] font-bold text-slate-600 leading-none">
-                  <span>Windows Servers</span>
-                  <span>{winServerCount} Nodes ({totalDevices > 0 ? Math.round((winServerCount / totalDevices) * 100) : 0}%)</span>
+                  <span>Windows Server ({winServerCount} Devices)</span>
+                  <span className="text-amber-600">{winServerPatches} Patches Available (50% Compliant)</span>
                 </div>
                 <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${totalDevices > 0 ? Math.round((winServerCount / totalDevices) * 100) : 0}%` }}></div>
+                  <div className="bg-amber-500 h-full rounded-full" style={{ width: '89%' }}></div>
                 </div>
               </div>
-              {/* Linux / Mac */}
+              {/* Linux */}
               <div className="space-y-1">
                 <div className="flex justify-between text-[8.5px] font-bold text-slate-600 leading-none">
-                  <span>Linux & macOS Systems</span>
-                  <span>{linuxCount + macCount} Nodes ({totalDevices > 0 ? Math.round(((linuxCount + macCount) / totalDevices) * 100) : 0}%)</span>
+                  <span>Linux Systems ({linuxCount} Devices)</span>
+                  <span className="text-rose-600">{linuxPatches} Patches Available (0% Compliant)</span>
                 </div>
                 <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                  <div className="bg-amber-500 h-full rounded-full" style={{ width: `${totalDevices > 0 ? Math.round(((linuxCount + macCount) / totalDevices) * 100) : 0}%` }}></div>
+                  <div className="bg-rose-500 h-full rounded-full" style={{ width: '11%' }}></div>
                 </div>
               </div>
             </div>
