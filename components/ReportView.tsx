@@ -16,7 +16,6 @@ import RiskScorecardPage from './reports/RiskScorecardPage';
 import DetailAssetsPage from './reports/DetailAssetsPage';
 import DetailTicketsPage from './reports/DetailTicketsPage';
 import DetailAlertsPage from './reports/DetailAlertsPage';
-import AppendixPage from './reports/AppendixPage';
 import BackCoverPage from './reports/BackCoverPage';
 
 interface ReportViewProps {
@@ -235,14 +234,9 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         alerts={alerts}
       />
 
-      {/* PAGE 15: APPENDIX & GLOSSARY */}
-      <AppendixPage 
-        pageNumber={15}
-      />
-
-      {/* PAGE 16: BACK COVER */}
+      {/* PAGE 15: BACK COVER */}
       <BackCoverPage 
-        pageNumber={16}
+        pageNumber={15}
       />
 
     </div>
