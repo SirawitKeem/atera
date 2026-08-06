@@ -9,6 +9,10 @@ import HealthPage from './reports/HealthPage';
 import AlertsPage from './reports/AlertsPage';
 import PatchesPage from './reports/PatchesPage';
 import TicketsPage from './reports/TicketsPage';
+import WorkhoursPage from './reports/WorkhoursPage';
+import ContractsPage from './reports/ContractsPage';
+import BillingPage from './reports/BillingPage';
+import RiskScorecardPage from './reports/RiskScorecardPage';
 import BackCoverPage from './reports/BackCoverPage';
 
 interface ReportViewProps {
@@ -181,7 +185,35 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         criticalTickets={criticalTickets}
       />
 
-      {/* PAGE 8: BACK COVER */}
+      {/* PAGE 8: SLA / WORKHOURS */}
+      <WorkhoursPage 
+        pageNumber={8}
+        workhours={workhours}
+      />
+
+      {/* PAGE 9: CONTRACTS */}
+      <ContractsPage 
+        pageNumber={9}
+        contracts={contracts}
+      />
+
+      {/* PAGE 10: BILLING / INVOICING */}
+      <BillingPage 
+        pageNumber={10}
+        customers={customers}
+        contracts={contracts}
+      />
+
+      {/* PAGE 11: CUSTOMER RISK SCORECARD */}
+      <RiskScorecardPage 
+        pageNumber={11}
+        customers={customers}
+        agents={agents}
+        alerts={alerts}
+        tickets={tickets}
+      />
+
+      {/* PAGE 12: BACK COVER */}
       <BackCoverPage />
 
     </div>
