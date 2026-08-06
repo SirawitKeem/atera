@@ -24,33 +24,41 @@ export default function BillingPage({
   contracts
 }: BillingPageProps) {
 
-  // Calculate billing figures based on customers & flat rates
-  const monthlyRevenue = contracts.reduce((sum, c) => {
-    const type = (c.ContractType || c.contractType || '').toLowerCase();
-    // Flat Fee gets higher value, Hourly gets lower baseline value
-    return sum + (type.includes('flat') ? 3500 : 1500);
-  }, 0) || 12000;
+  // Helper function to calculate contract value dynamically from Atera API schema
+  const getContractValue = (c: any) => {
+    if (c.RetainerFlatFeeContract?.Rate?.Amount !== undefined) {
+      return (c.RetainerFlatFeeContract.Rate.Amount * (c.RetainerFlatFeeContract.Quantity || 1));
+    }
+    // Fallback logic for hourly rates (estimate 10 hours of work)
+    if (c.HourlyRate || c.hourlyRate) {
+      return (c.HourlyRate || c.hourlyRate) * 10;
+    }
+    return 150; // standard baseline fee
+  };
 
-  const totalInvoices = customers.length;
+  // Calculate monthly revenue dynamically
+  const monthlyRevenue = contracts.reduce((sum, c) => sum + getContractValue(c), 0);
+
+  const totalInvoices = contracts.length || customers.length || 0;
   const outstandingAmount = 0;
-  const paymentCompliance = 100; // 100% paid
+  const paymentCompliance = 100;
 
-  // Customer Invoiced breakdown
-  const invoiceLogs = customers.map((c, idx) => {
-    const name = c.CustomerName || 'Client';
-    const custContracts = contracts.filter(con => con.CustomerID === c.CustomerID || con.CustomerName === c.CustomerName);
-    const amount = custContracts.reduce((sum, con) => {
-      const type = (con.ContractType || con.contractType || '').toLowerCase();
-      return sum + (type.includes('flat') ? 3500 : 1500);
-    }, 0) || 2000;
-
-    return {
-      name,
-      amount,
-      status: 'Paid',
-      period: '01 Jul - 31 Jul 2026'
-    };
-  }).sort((a, b) => b.amount - a.amount);
+  // Build invoice logs dynamically using active contracts data from the API
+  const invoiceLogs = (contracts.length > 0 
+    ? contracts.map((c, idx) => ({
+        id: c.ContractID || idx + 1,
+        name: c.CustomerName || 'Client',
+        amount: getContractValue(c),
+        status: c.Active ? 'Paid' : 'Pending',
+        period: '01 Jul - 31 Jul 2026'
+      }))
+    : customers.map((c, idx) => ({
+        id: idx + 1,
+        name: c.CustomerName || 'Client',
+        amount: 150, // standard baseline rate when no contract is found
+        status: 'Paid',
+        period: '01 Jul - 31 Jul 2026'
+      }))).sort((a, b) => b.amount - a.amount);
 
   return (
     <div 
