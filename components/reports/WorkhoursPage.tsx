@@ -15,11 +15,13 @@ import ReportHeader from './ReportHeader';
 interface WorkhoursPageProps {
   pageNumber: number;
   workhours: any[];
+  tickets: any[];
 }
 
 export default function WorkhoursPage({
   pageNumber,
-  workhours
+  workhours,
+  tickets
 }: WorkhoursPageProps) {
 
   const totalLoggedHours = workhours.reduce((sum, w) => sum + (w.LoggedHours || w.loggedHours || 0), 0);
@@ -27,6 +29,13 @@ export default function WorkhoursPage({
                                  .reduce((sum, w) => sum + (w.LoggedHours || w.loggedHours || 0), 0);
   const nonBillableHours = Math.max(0, totalLoggedHours - billableHours);
   const billablePercent = totalLoggedHours > 0 ? Math.round((billableHours / totalLoggedHours) * 100) : 0;
+
+  // SLA compliance calculation from active tickets (dynamic from API)
+  const slaMetCount = tickets.filter(t => {
+    const onSlaMins = t.OnSLADurationMinutes || 0;
+    return onSlaMins === 0 || onSlaMins < 480; 
+  }).length;
+  const slaPercent = tickets.length > 0 ? Math.round((slaMetCount / tickets.length) * 100) : 100;
 
   // Technician statistics
   const techHours: Record<string, number> = {};
@@ -103,7 +112,7 @@ export default function WorkhoursPage({
               <Award className="h-3.5 w-3.5 text-emerald-500" />
             </div>
             <div>
-              <h4 className="text-base font-black text-emerald-600 leading-none">96.8%</h4>
+              <h4 className="text-base font-black text-emerald-600 leading-none">{slaPercent}%</h4>
               <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Resolution SLAs Met</p>
             </div>
           </div>
@@ -206,6 +215,13 @@ export default function WorkhoursPage({
                     </tr>
                   );
                 })}
+                 {workhours.length === 0 && (
+                   <tr>
+                     <td colSpan={5} className="px-4 py-8 text-center text-slate-400 font-bold">
+                       ไม่พบข้อมูลบันทึกเวลาทำงานของวิศวกรในระบบ API (No technician labor logs found)
+                     </td>
+                   </tr>
+                 )}
               </tbody>
             </table>
           </div>

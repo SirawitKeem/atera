@@ -197,6 +197,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
       <WorkhoursPage 
         pageNumber={8}
         workhours={workhours}
+        tickets={tickets}
       />
 
       {/* PAGE 9: CONTRACTS */}
