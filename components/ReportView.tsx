@@ -9,9 +9,6 @@ import HealthPage from './reports/HealthPage';
 import AlertsPage from './reports/AlertsPage';
 import PatchesPage from './reports/PatchesPage';
 import TicketsPage from './reports/TicketsPage';
-import WorkhoursPage from './reports/WorkhoursPage';
-import ContractsPage from './reports/ContractsPage';
-import BillingPage from './reports/BillingPage';
 import RiskScorecardPage from './reports/RiskScorecardPage';
 import DetailAssetsPage from './reports/DetailAssetsPage';
 import DetailTicketsPage from './reports/DetailTicketsPage';
@@ -193,56 +190,36 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         criticalTickets={criticalTickets}
       />
 
-      {/* PAGE 8: SLA / WORKHOURS */}
-      <WorkhoursPage 
-        pageNumber={8}
-        workhours={workhours}
-        tickets={tickets}
-      />
-
-      {/* PAGE 9: CONTRACTS */}
-      <ContractsPage 
-        pageNumber={9}
-        contracts={contracts}
-      />
-
-      {/* PAGE 10: BILLING / INVOICING */}
-      <BillingPage 
-        pageNumber={10}
-        customers={customers}
-        contracts={contracts}
-      />
-
-      {/* PAGE 11: CUSTOMER RISK SCORECARD */}
+      {/* PAGE 8: CUSTOMER RISK SCORECARD */}
       <RiskScorecardPage 
-        pageNumber={11}
+        pageNumber={8}
         customers={customers}
         agents={agents}
         alerts={alerts}
         tickets={tickets}
       />
 
-      {/* PAGE 12: DETAILED ASSETS INVENTORY */}
+      {/* PAGE 9: DETAILED ASSETS INVENTORY */}
       <DetailAssetsPage 
-        pageNumber={12}
+        pageNumber={9}
         agents={agents}
       />
 
-      {/* PAGE 13: DETAILED TICKETS LOG */}
+      {/* PAGE 10: DETAILED TICKETS LOG */}
       <DetailTicketsPage 
-        pageNumber={13}
+        pageNumber={10}
         tickets={tickets}
       />
 
-      {/* PAGE 14: DETAILED ALERTS LOG */}
+      {/* PAGE 11: DETAILED ALERTS LOG */}
       <DetailAlertsPage 
-        pageNumber={14}
+        pageNumber={11}
         alerts={alerts}
       />
 
-      {/* PAGE 15: BACK COVER */}
+      {/* PAGE 12: BACK COVER */}
       <BackCoverPage 
-        pageNumber={15}
+        pageNumber={12}
       />
 
     </div>
