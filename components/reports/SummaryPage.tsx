@@ -392,61 +392,14 @@ export default function SummaryPage({
 
         </div>
 
-        {/* SECTION 4: EXECUTIVE HIGHLIGHTS & RECOMMENDED ACTIONS */}
-        <div className="grid grid-cols-2 gap-4 border border-slate-100 rounded-xl p-3.5 bg-white/70 backdrop-blur-xs select-none">
-          {/* Executive Highlights (Left Column - Red reserved strictly for Critical alerts) */}
-          <div className="space-y-1.5">
-            <h4 className="text-[9px] font-black text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
-              <AlertOctagon className="h-3.5 w-3.5 text-blue-500" /> Executive Highlights
-            </h4>
-            <ul className="text-slate-600 text-[9.5px] space-y-1 list-none pl-1">
-              <li className="flex items-start gap-1.5">
-                <span className="text-emerald-500 font-bold flex-shrink-0">✓</span>
-                <span>Agent Connectivity ภาพรวมอยู่ในเกณฑ์คงที่ที่ <strong>{onlineRatio}%</strong></span>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="text-rose-600 font-bold flex-shrink-0">⚠</span>
-                <span>พบแจ้งเตือนระดับวิกฤต (Critical Alerts) ค้างสะสมรวม <strong>{criticalAlertsCount} รายการ</strong></span>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="text-blue-500 font-bold flex-shrink-0">✓</span>
-                <span>มีตั๋วงานซ่อมแซม RMM ค้างรอดำเนินงานรวม <strong>{openTickets} ใบ</strong></span>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="text-slate-500 font-bold flex-shrink-0">✓</span>
-                <span>สัญญาบริการที่เปิดใช้งานอยู่มีจำนวน <strong>{contracts.length} สัญญา</strong> เพื่อรองรับงานดูแลลูกค้า</span>
-              </li>
-            </ul>
-          </div>
 
-          {/* Recommended Actions (Right Column) */}
-          <div className="space-y-1.5 border-l border-slate-200/80 pl-4">
-            <h4 className="text-[9px] font-black text-blue-600 uppercase tracking-wider flex items-center gap-1.5">
-              <Info className="h-3.5 w-3.5" /> Recommended Actions
-            </h4>
-            <ul className="text-slate-600 text-[9.5px] space-y-1 list-none pl-1 font-medium">
-              <li className="flex items-start gap-1.5">
-                <span className="text-blue-500 font-bold flex-shrink-0">•</span>
-                <span><strong>Audit Operating Systems:</strong> ติดตามตรวจสอบรุ่น Build ของระบบปฏิบัติการอุปกรณ์ให้สอดคล้องตามมาตรฐานความปลอดภัย</span>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="text-blue-500 font-bold flex-shrink-0">•</span>
-                <span><strong>Investigate Offline Devices:</strong> ตรวจสอบสถานะการออนไลน์ของคอมพิวเตอร์ที่ RMM ขาดการติดต่อ</span>
-              </li>
-              <li className="flex items-start gap-1.5">
-                <span className="text-blue-500 font-bold flex-shrink-0">•</span>
-                <span><strong>Review High Priority Tickets:</strong> คัดกรองคิวเพื่อรับเรื่องตั๋ววิกฤตของลูกค้าหลักตามข้อตกลง SLA</span>
-              </li>
-            </ul>
-          </div>
-        </div>
 
       </div>
 
       {/* Page Footer (Dynamic, professional layout) */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
-        <span>หน้า {pageNumber} จาก 12</span>
+        <span>หน้า {pageNumber} จาก 8</span>
       </div>
     </div>
   );

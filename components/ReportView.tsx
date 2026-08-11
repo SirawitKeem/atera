@@ -10,10 +10,7 @@ import AlertsPage from './reports/AlertsPage';
 import PatchesPage from './reports/PatchesPage';
 import TicketsPage from './reports/TicketsPage';
 import RiskScorecardPage from './reports/RiskScorecardPage';
-import DetailAssetsPage from './reports/DetailAssetsPage';
-import DetailTicketsPage from './reports/DetailTicketsPage';
-import DetailAlertsPage from './reports/DetailAlertsPage';
-import BackCoverPage from './reports/BackCoverPage';
+
 
 interface ReportViewProps {
   data: {
@@ -199,28 +196,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         tickets={tickets}
       />
 
-      {/* PAGE 9: DETAILED ASSETS INVENTORY */}
-      <DetailAssetsPage 
-        pageNumber={9}
-        agents={agents}
-      />
 
-      {/* PAGE 10: DETAILED TICKETS LOG */}
-      <DetailTicketsPage 
-        pageNumber={10}
-        tickets={tickets}
-      />
-
-      {/* PAGE 11: DETAILED ALERTS LOG */}
-      <DetailAlertsPage 
-        pageNumber={11}
-        alerts={alerts}
-      />
-
-      {/* PAGE 12: BACK COVER */}
-      <BackCoverPage 
-        pageNumber={12}
-      />
 
     </div>
   );
