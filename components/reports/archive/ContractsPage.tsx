@@ -10,16 +10,20 @@ import {
   Award,
   Server
 } from 'lucide-react';
-import ReportHeader from './ReportHeader';
+import ReportHeader from '../ReportHeader';
 
 interface ContractsPageProps {
   pageNumber: number;
   contracts: any[];
+  dateRangeDisplay?: string;
+  totalPages?: number;
 }
 
 export default function ContractsPage({
   pageNumber,
-  contracts
+  contracts,
+  dateRangeDisplay,
+  totalPages = 9
 }: ContractsPageProps) {
 
   const totalContracts = contracts.length;
@@ -55,7 +59,7 @@ export default function ContractsPage({
       {/* Report Header */}
       <ReportHeader 
         title="Service Contracts" 
-        subtitle="Active SLA Agreements & Service Scope Contracts | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        subtitle={`Active SLA Agreements & Service Scope Contracts | Reporting Period: ${dateRangeDisplay || 'N/A'}`} 
       />
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">
@@ -159,9 +163,6 @@ export default function ContractsPage({
                   100%<br/><span className="text-[6.5px] text-slate-400 font-bold">HEALTHY</span>
                 </div>
               </div>
-              <p className="text-[8.5px] text-slate-500 font-bold text-center">
-                สัญญาทุกฉบับมีระยะเวลาคุ้มครองครอบคลุมถึงปี 2027
-              </p>
             </div>
           </div>
 
@@ -219,7 +220,7 @@ export default function ContractsPage({
       {/* Page Footer */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
-        <span>หน้า {pageNumber} จาก 8</span>
+        <span>หน้า {pageNumber} จาก {totalPages}</span>
       </div>
     </div>
   );

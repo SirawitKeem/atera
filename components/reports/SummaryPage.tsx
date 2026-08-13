@@ -27,6 +27,7 @@ interface SummaryPageProps {
   totalDevices: number;
   totalTickets: number;
   resolvedTickets: number;
+  totalPages?: number;
   dateRangeDisplay?: string;
 }
 
@@ -43,8 +44,8 @@ export default function SummaryPage({
   openTickets,
   totalDevices,
   totalTickets,
-  resolvedTickets
-,
+  resolvedTickets,
+  totalPages = 9,
   dateRangeDisplay
 }: SummaryPageProps) {
 
@@ -53,8 +54,7 @@ export default function SummaryPage({
     if (!createdDateStr) return '1 day ago';
     const createdDate = new Date(createdDateStr);
     
-    // Set fixed fallback context date to avoid SSR drift (matching the mock data date 2026-08-05)
-    const now = new Date('2026-08-05T12:00:00Z');
+    const now = new Date();
     const diffMs = now.getTime() - createdDate.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
@@ -165,94 +165,11 @@ export default function SummaryPage({
       {/* Report Header */}
       <ReportHeader 
         title="Executive Summary" 
-        subtitle="Monthly Executive Report | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        subtitle={`Monthly Executive Report | Reporting Period: ${dateRangeDisplay || 'N/A'}`} 
         dateRangeDisplay={dateRangeDisplay}
       />
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-2">
-        
-        {/* SECTION 1: 5 KPI CARDS GRID */}
-        <div className="grid grid-cols-5 gap-3 select-none">
-          {/* Customers */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[82px]">
-            <div className="flex items-start justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block pr-4 truncate">
-                Customers
-              </span>
-              <span className="text-[7px] font-bold text-slate-400 flex-shrink-0">
-                ▲ +0%
-              </span>
-            </div>
-            <div>
-              <h4 className="text-xl font-black text-slate-800 leading-none">{totalCustomers}</h4>
-              <p className="text-[7px] text-slate-400 font-bold mt-1 uppercase">Active Clients</p>
-            </div>
-          </div>
-
-          {/* Agent Connectivity */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[82px]">
-            <div className="flex items-start justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block pr-4 truncate">
-                Agent Connectivity
-              </span>
-              <span className="text-[7px] font-bold text-blue-600 flex-shrink-0">
-                ▲ +1.2%
-              </span>
-            </div>
-            <div>
-              <h4 className="text-xl font-black text-slate-800 leading-none">{onlineRatio}%</h4>
-              <p className="text-[7px] text-slate-400 font-bold mt-1 uppercase">On: {onlineCount} / Off: {offlineCount}</p>
-            </div>
-          </div>
-
-          {/* Critical Alerts */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[82px]">
-            <div className="flex items-start justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block pr-4 truncate">
-                Critical Alerts
-              </span>
-              <span className="text-[7px] font-bold text-emerald-600 flex-shrink-0">
-                ▼ -15%
-              </span>
-            </div>
-            <div>
-              <h4 className="text-xl font-black text-rose-600 leading-none">{criticalAlertsCount}</h4>
-              <p className="text-[7px] text-rose-400 font-bold mt-1 uppercase">Active Cases</p>
-            </div>
-          </div>
-
-          {/* Open Tickets */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[82px]">
-            <div className="flex items-start justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block pr-4 truncate">
-                Open Tickets
-              </span>
-              <span className="text-[7px] font-bold text-rose-600 flex-shrink-0">
-                ▲ +8%
-              </span>
-            </div>
-            <div>
-              <h4 className="text-xl font-black text-blue-600 leading-none">{openTickets}</h4>
-              <p className="text-[7px] text-blue-400 font-bold mt-1 uppercase">Pending Tickets</p>
-            </div>
-          </div>
-
-          {/* Service Contracts */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[82px]">
-            <div className="flex items-start justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block pr-4 truncate">
-                Service Contracts
-              </span>
-              <span className="text-[7px] font-bold text-indigo-600 flex-shrink-0">
-                ▲ +0%
-              </span>
-            </div>
-            <div>
-              <h4 className="text-xl font-black text-indigo-600 leading-none">{contracts.length}</h4>
-              <p className="text-[7px] text-indigo-500 font-bold mt-1 uppercase">Active SLA Contracts</p>
-            </div>
-          </div>
-        </div>
 
         {/* SECTION 2: HEALTH SCORE & RISK METER (100% Symmetric Layout & Font Sizes) */}
         <div className="grid grid-cols-2 gap-4 select-none">
@@ -403,7 +320,7 @@ export default function SummaryPage({
       {/* Page Footer (Dynamic, professional layout) */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
-        <span>หน้า {pageNumber} จาก 8</span>
+        <span>หน้า {pageNumber} จาก {totalPages}</span>
       </div>
     </div>
   );

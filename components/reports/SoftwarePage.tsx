@@ -29,14 +29,15 @@ interface SoftwarePageProps {
   pageNumber: number;
   patchData: AgentData[];
   reportPeriod: { start: string; end: string };
+  totalPages?: number;
   dateRangeDisplay?: string;
 }
 
 export default function SoftwarePage({
   pageNumber,
   patchData,
-  reportPeriod
-,
+  reportPeriod,
+  totalPages = 9,
   dateRangeDisplay
 }: SoftwarePageProps) {
 
@@ -87,7 +88,7 @@ export default function SoftwarePage({
       {/* Report Header */}
       <ReportHeader 
         title="Available OS Patches" 
-        subtitle={`Devices Missing OS Patches | Reporting Period: ${formattedPeriod}`} 
+        subtitle={`Devices Missing OS Patches | Reporting Period: ${dateRangeDisplay || 'N/A'}`} 
         dateRangeDisplay={dateRangeDisplay}
       />
 
@@ -217,7 +218,7 @@ export default function SoftwarePage({
       {/* Page Footer */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
-        <span>หน้า {pageNumber} จาก 9</span>
+        <span>หน้า {pageNumber} จาก {totalPages}</span>
       </div>
     </div>
   );

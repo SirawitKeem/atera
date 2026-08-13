@@ -20,6 +20,7 @@ interface TicketsPageProps {
   openTickets: number;
   resolvedTickets: number;
   criticalTickets: number;
+  totalPages?: number;
   dateRangeDisplay?: string;
 }
 
@@ -29,20 +30,16 @@ export default function TicketsPage({
   totalTickets,
   openTickets,
   resolvedTickets,
-  criticalTickets
-,
+  criticalTickets,
+  totalPages = 9,
   dateRangeDisplay
 }: TicketsPageProps) {
-
-  // Ticket Priority counters
   const highPriorityTickets = tickets.filter(t => (t.TicketPriority || t.priority || '').toLowerCase() === 'high').length;
   const mediumPriorityTickets = tickets.filter(t => (t.TicketPriority || t.priority || '').toLowerCase() === 'medium').length;
   const lowPriorityTickets = tickets.filter(t => (t.TicketPriority || t.priority || '').toLowerCase() === 'low').length;
 
-  // SLA calculation
-  const slaCompliancePercent = 95; // derived SLA compliance
-
-  // Status percentages
+  // KPIs
+  const slaCompliancePercent = totalTickets > 0 ? Math.round((resolvedTickets / totalTickets) * 100) : 100;
   const openPercent = totalTickets > 0 ? Math.round((openTickets / totalTickets) * 100) : 0;
   const resolvedPercent = totalTickets > 0 ? Math.round((resolvedTickets / totalTickets) * 100) : 0;
 
@@ -64,7 +61,7 @@ export default function TicketsPage({
       {/* Report Header */}
       <ReportHeader 
         title="Ticket Overview" 
-        subtitle="Helpdesk Ticket Volume & Support Performance | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        subtitle={`Helpdesk Ticket Volume & Support Performance | Reporting Period: ${dateRangeDisplay || 'N/A'}`} 
         dateRangeDisplay={dateRangeDisplay}
       />
 
@@ -252,7 +249,7 @@ export default function TicketsPage({
       {/* Page Footer */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
-        <span>หน้า {pageNumber} จาก 8</span>
+        <span>หน้า {pageNumber} จาก {totalPages}</span>
       </div>
     </div>
   );

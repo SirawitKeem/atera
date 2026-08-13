@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Printer, Calendar } from 'lucide-react';
+import { Printer, Calendar, Mail } from 'lucide-react';
+import EmailScheduleModal from './EmailScheduleModal';
 import CoverPage from './reports/CoverPage';
 import SummaryPage from './reports/SummaryPage';
 import DevicesPage from './reports/DevicesPage';
@@ -20,18 +21,30 @@ interface ReportViewProps {
     alerts: any[];
     contracts: any[];
     workhours: any[];
+    contacts: any[];
     patchData: any[];
+    accountInfo: any;
   };
   isMock: boolean;
   errorMsg: string | null;
 }
 
 export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) {
-  const { customers, agents, tickets, alerts: rawAlerts, contracts, workhours, patchData } = data;
+  const { customers, agents, tickets, alerts: rawAlerts, contracts, workhours, contacts, patchData } = data;
 
-  // ===== DATE RANGE PICKER STATE =====
-  const [startDate, setStartDate] = useState('2026-07-13');
-  const [endDate, setEndDate] = useState('2026-08-13');
+  // ===== TOTAL PAGES CONSTANT =====
+  const totalPages = 9;
+
+  // ===== DATE RANGE PICKER STATE (default: 30 days back from today) =====
+  const today = new Date();
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+
+  const formatISODate = (d: Date) => d.toISOString().split('T')[0];
+
+  const [startDate, setStartDate] = useState(formatISODate(thirtyDaysAgo));
+  const [endDate, setEndDate] = useState(formatISODate(today));
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   const reportPeriod = useMemo(() => ({ start: startDate, end: endDate }), [startDate, endDate]);
 
@@ -43,7 +56,6 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
   };
 
   // ===== FILTER DATA BY DATE RANGE =====
-  // Filter active alerts only (Archived: false) AND within date range
   const alerts = useMemo(() => {
     const activeAlerts = isMock 
       ? rawAlerts 
@@ -51,7 +63,6 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
     return activeAlerts.filter(a => isInRange(a.Created || a.CreatedDate || a.created));
   }, [rawAlerts, isMock, startDate, endDate]);
 
-  // Filter tickets within date range
   const filteredTickets = useMemo(() => {
     return tickets.filter(t => isInRange(t.TicketCreatedDate || t.CreatedDate || t.created));
   }, [tickets, startDate, endDate]);
@@ -61,10 +72,16 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
   };
 
   // Format report period for display
+  const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+  const formatThaiDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return `${d.getDate()} ${thaiMonths[d.getMonth()]} ${d.getFullYear()}`;
+  };
   const formatDateDisplay = (dateStr: string) => {
     const d = new Date(dateStr);
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
+  const dateRangeDisplay = `${formatDateDisplay(startDate)} - ${formatDateDisplay(endDate)}`;
 
   const currentDate = new Date().toLocaleDateString('en-GB', {
     day: '2-digit',
@@ -75,21 +92,12 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
     hour12: true
   });
 
-  // Calculate statistics from the provided data
-  const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-  const formatThaiDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return `${d.getDate()} ${thaiMonths[d.getMonth()]} ${d.getFullYear()}`;
-  };
-  const dateRangeDisplay = `${formatThaiDate(startDate)} - ${formatThaiDate(endDate)}`;
-
+  // Calculate statistics
   const totalCustomers = customers.length;
   const totalDevices = agents.length;
   const onlineDevices = agents.filter(a => a.Online === true || a.online === true || String(a.Online).toLowerCase() === 'true').length;
-  const offlineDevices = totalDevices - onlineDevices;
   const onlineRatio = totalDevices > 0 ? Math.round((onlineDevices / totalDevices) * 100) : 100;
 
-  // Ticket stats (from filtered tickets)
   const totalTickets = filteredTickets.length;
   const openTickets = filteredTickets.filter(t => {
     const status = (t.TicketStatus || t.status || '').toLowerCase();
@@ -101,37 +109,12 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
     return priority === 'critical';
   }).length;
 
-  // Alert stats (from filtered alerts)
   const totalAlerts = alerts.length;
   const criticalAlerts = alerts.filter(a => {
     const severity = (a.Severity || a.severity || '').toLowerCase();
     return severity === 'critical';
   }).length;
   const warningAlerts = totalAlerts - criticalAlerts;
-
-  // OS Distribution calculation based on real agents data
-  const osCounts: Record<string, number> = {};
-  agents.forEach(a => {
-    const os = (a.OS || a.os || 'Unknown OS').toLowerCase();
-    if (os.includes('win') && os.includes('server')) {
-      osCounts['Windows Server'] = (osCounts['Windows Server'] || 0) + 1;
-    } else if (os.includes('win')) {
-      osCounts['Windows Workstation'] = (osCounts['Windows Workstation'] || 0) + 1;
-    } else if (os.includes('mac') || os.includes('darwin')) {
-      osCounts['macOS'] = (osCounts['macOS'] || 0) + 1;
-    } else if (os.includes('linux') || os.includes('ubuntu') || os.includes('debian')) {
-      osCounts['Linux'] = (osCounts['Linux'] || 0) + 1;
-    } else {
-      osCounts['Other'] = (osCounts['Other'] || 0) + 1;
-    }
-  });
-
-  // Calculate OS percentages
-  const osPercentages = Object.entries(osCounts).map(([name, count]) => ({
-    name,
-    count,
-    percentage: totalDevices > 0 ? Math.round((count / totalDevices) * 100) : 0
-  })).sort((a, b) => b.count - a.count);
 
   return (
     <div className="a4-container min-h-screen">
@@ -142,17 +125,15 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         {/* Left side: Status */}
         <div className="flex items-center gap-4">
           <div className="relative flex items-center justify-center">
-            <div className={`absolute h-4 w-4 rounded-full ${isMock ? 'bg-amber-400' : 'bg-emerald-400'} animate-ping opacity-75`} />
-            <div className={`relative h-3 w-3 rounded-full ${isMock ? 'bg-amber-500' : 'bg-emerald-500'} shadow-sm`} />
+            <div className="absolute h-4 w-4 rounded-full bg-emerald-400 animate-ping opacity-75" />
+            <div className="relative h-3 w-3 rounded-full bg-emerald-500 shadow-sm" />
           </div>
           <div className="flex flex-col">
             <h3 className="font-bold text-sm text-slate-800 tracking-tight">
-              {isMock ? 'Mock Data Mode' : 'Live API Connected'}
+              Live API Connected
             </h3>
             <p className="text-[11px] text-slate-500 font-medium">
-              {isMock 
-                ? `ตรวจสอบไฟล์ .env.local (${errorMsg || 'Missing API Key'})`
-                : 'เชื่อมต่อและดึงข้อมูลจาก Atera เรียลไทม์'}
+              {errorMsg ? errorMsg : 'เชื่อมต่อและดึงข้อมูลจาก Atera เรียลไทม์'}
             </p>
           </div>
         </div>
@@ -188,6 +169,15 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
 
           <div className="w-px h-8 bg-slate-200 mx-1"></div>
 
+          {/* Auto Email Schedule Button */}
+          <button
+            onClick={() => setIsEmailModalOpen(true)}
+            className="flex items-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 text-xs font-bold shadow-md hover:shadow-slate-800/30 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer"
+          >
+            <Mail className="h-4 w-4 text-blue-400" /> 
+            <span>Auto Email</span>
+          </button>
+
           {/* Print Button */}
           <button
             onClick={handlePrint}
@@ -198,6 +188,14 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
           </button>
         </div>
       </div>
+
+      {/* Email Schedule Modal */}
+      <EmailScheduleModal 
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        companyName={data.accountInfo?.CompanyName || 'Atera Client'}
+        dateRangeDisplay={dateRangeDisplay}
+      />
 
       {/* PAGE 1: COVER PAGE */}
       <CoverPage 
@@ -224,7 +222,8 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         totalDevices={totalDevices}
         totalTickets={totalTickets}
         resolvedTickets={resolvedTickets}
-      dateRangeDisplay={dateRangeDisplay}
+        dateRangeDisplay={dateRangeDisplay}
+        totalPages={totalPages}
       />
 
       {/* PAGE 3: INFRASTRUCTURE & CUSTOMER OVERVIEW */}
@@ -233,7 +232,9 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         customers={customers}
         agents={agents}
         contracts={contracts}
-      dateRangeDisplay={dateRangeDisplay}
+        contacts={contacts}
+        dateRangeDisplay={dateRangeDisplay}
+        totalPages={totalPages}
       />
 
       {/* PAGE 4: OS PATCH SUMMARY */}
@@ -242,15 +243,17 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         agents={agents}
         patchData={patchData}
         reportPeriod={reportPeriod}
-      dateRangeDisplay={dateRangeDisplay}
+        dateRangeDisplay={dateRangeDisplay}
+        totalPages={totalPages}
       />
 
-      {/* PAGE 5: SOFTWARE UPDATES REQUIRED */}
+      {/* PAGE 5: AVAILABLE OS PATCHES */}
       <SoftwarePage 
         pageNumber={5}
         patchData={patchData}
         reportPeriod={reportPeriod}
-      dateRangeDisplay={dateRangeDisplay}
+        dateRangeDisplay={dateRangeDisplay}
+        totalPages={totalPages}
       />
 
       {/* PAGE 6: ALERT OVERVIEW */}
@@ -259,7 +262,8 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         alerts={alerts}
         criticalAlerts={criticalAlerts}
         warningAlerts={warningAlerts}
-      dateRangeDisplay={dateRangeDisplay}
+        dateRangeDisplay={dateRangeDisplay}
+        totalPages={totalPages}
       />
 
       {/* PAGE 7: TICKET OVERVIEW */}
@@ -270,7 +274,8 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         openTickets={openTickets}
         resolvedTickets={resolvedTickets}
         criticalTickets={criticalTickets}
-      dateRangeDisplay={dateRangeDisplay}
+        dateRangeDisplay={dateRangeDisplay}
+        totalPages={totalPages}
       />
 
       {/* PAGE 8: SECURITY & VULNERABILITY ASSESSMENT */}
@@ -280,14 +285,17 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         agents={agents}
         alerts={alerts}
         tickets={filteredTickets}
-      dateRangeDisplay={dateRangeDisplay}
+        patchData={patchData}
+        dateRangeDisplay={dateRangeDisplay}
+        totalPages={totalPages}
       />
 
-      {/* PAGE 9: DEVICE AVAILABILITY & HEALTH (LAST) */}
+      {/* PAGE 9: DEVICE AVAILABILITY & HEALTH */}
       <HealthPage 
         pageNumber={9}
         agents={agents}
-      dateRangeDisplay={dateRangeDisplay}
+        dateRangeDisplay={dateRangeDisplay}
+        totalPages={totalPages}
       />
 
     </div>

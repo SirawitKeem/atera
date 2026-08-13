@@ -2,16 +2,20 @@
 
 import React from 'react';
 import { Server, Terminal, Laptop } from 'lucide-react';
-import ReportHeader from './ReportHeader';
+import ReportHeader from '../ReportHeader';
 
 interface DetailAssetsPageProps {
   pageNumber: number;
   agents: any[];
+  dateRangeDisplay?: string;
+  totalPages?: number;
 }
 
 export default function DetailAssetsPage({
   pageNumber,
-  agents
+  agents,
+  dateRangeDisplay,
+  totalPages = 9
 }: DetailAssetsPageProps) {
 
   // OS Icon Helper
@@ -47,7 +51,7 @@ export default function DetailAssetsPage({
       {/* Report Header */}
       <ReportHeader 
         title="Detailed Assets Inventory" 
-        subtitle="Full Network IT Asset Registry & Node Diagnostics | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        subtitle={`Full Network IT Asset Registry & Node Diagnostics | Reporting Period: ${dateRangeDisplay || 'N/A'}`} 
       />
 
       <div className="page-content space-y-3 flex-1 flex flex-col justify-between overflow-hidden mt-3">
@@ -106,7 +110,7 @@ export default function DetailAssetsPage({
       {/* Page Footer */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
-        <span>หน้า {pageNumber} จาก 8</span>
+        <span>หน้า {pageNumber} จาก {totalPages}</span>
       </div>
     </div>
   );

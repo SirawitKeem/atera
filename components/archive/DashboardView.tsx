@@ -7,7 +7,7 @@ import CustomersTab from './CustomersTab';
 import DevicesTab from './DevicesTab';
 import TicketsTab from './TicketsTab';
 import AlertsTab from './AlertsTab';
-import ReportView from './ReportView';
+import ReportView from '../ReportView';
 import { Database, CheckCircle, AlertTriangle, Key, ShieldCheck, Cpu } from 'lucide-react';
 
 interface DashboardViewProps {
@@ -18,7 +18,9 @@ interface DashboardViewProps {
     alerts: any[];
     contracts: any[];
     workhours: any[];
+    contacts: any[];
     patchData: any[];
+    accountInfo: any;
   };
   isMock: boolean;
   errorMsg: string | null;
@@ -78,7 +80,7 @@ export default function DashboardView({ data, isMock, errorMsg }: DashboardViewP
   return (
     <div className="flex min-h-screen bg-slate-50/50">
       {/* Collapsible Sidebar (Hidden in Print unless Executive Report is open) */}
-      <Sidebar activeItem={activeSidebarItem} onItemClick={setActiveSidebarItem} />
+      <Sidebar activeItem={activeSidebarItem} onItemClick={setActiveSidebarItem} workspaceName={data.accountInfo?.CompanyName} />
       
       {/* Main Content Area */}
       <main className="flex-1 p-6 text-slate-800 font-sans antialiased overflow-y-auto max-h-screen scrollbar-none flex flex-col justify-between">
@@ -112,7 +114,7 @@ export default function DashboardView({ data, isMock, errorMsg }: DashboardViewP
 
         {/* Footer (Hidden in Print) */}
         <footer className="no-print mt-12 border-t border-slate-100 pt-5 text-center text-[10px] text-slate-400 font-medium">
-          <p>© {new Date().getFullYear()} Keem Workspace Operations Centre • Secured Atera API v3 Integration</p>
+          <p>© {new Date().getFullYear()} {data.accountInfo?.CompanyName || 'Workspace'} Operations Centre • Atera API v3 Integration</p>
         </footer>
       </main>
     </div>
@@ -168,10 +170,10 @@ ATERA_API_URL=https://app.atera.com/api/v3`}
               </div>
 
               <div className="space-y-1">
-                <span className="text-slate-400">Encryption Method</span>
+                <span className="text-slate-400">API Version</span>
                 <p className="font-bold text-slate-800 flex items-center gap-1.5">
                   <Cpu className="h-3.5 w-3.5 text-blue-500" />
-                  TLS 1.3 AES-256-GCM
+                  Atera REST API v3
                 </p>
               </div>
             </div>

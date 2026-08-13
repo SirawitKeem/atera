@@ -18,6 +18,8 @@ interface RiskScorecardPageProps {
   agents: any[];
   alerts: any[];
   tickets: any[];
+  patchData?: any[];
+  totalPages?: number;
   dateRangeDisplay?: string;
 }
 
@@ -26,8 +28,9 @@ export default function RiskScorecardPage({
   customers,
   agents,
   alerts,
-  tickets
-,
+  tickets,
+  patchData = [],
+  totalPages = 9,
   dateRangeDisplay
 }: RiskScorecardPageProps) {
 
@@ -75,6 +78,12 @@ export default function RiskScorecardPage({
   const criticalClientsCount = clientRiskScores.filter(c => c.riskScore >= 70).length;
   const totalCriticalAlerts = alerts.filter(a => (a.Severity || a.severity || '').toLowerCase() === 'critical').length;
   const vulnerableDevicesCount = agents.filter(a => (a.AvailablePatchesCount || 0) > 0).length || 2;
+  const totalOpenTickets = tickets.filter(t => ['open', 'new', 'pending'].includes((t.TicketStatus || t.status || '').toLowerCase())).length;
+  const totalMissingPatches = patchData.reduce((sum: number, agent: any) => sum + (agent.availablePatches?.length || 0), 0);
+  const totalThreats = totalMissingPatches + totalCriticalAlerts + totalOpenTickets;
+  const patchImpact = totalThreats > 0 ? Math.round((totalMissingPatches / totalThreats) * 100) : 0;
+  const alertImpact = totalThreats > 0 ? Math.round((totalCriticalAlerts / totalThreats) * 100) : 0;
+  const ticketImpact = totalThreats > 0 ? Math.round((totalOpenTickets / totalThreats) * 100) : 0;
 
   return (
     <div 
@@ -89,132 +98,11 @@ export default function RiskScorecardPage({
       {/* Report Header */}
       <ReportHeader 
         title="Customer Risk Scorecard" 
-        subtitle="Security Audits & Risk Assessment Metrics | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        subtitle={`Security Audits & Risk Assessment Metrics | Reporting Period: ${dateRangeDisplay || 'N/A'}`} 
         dateRangeDisplay={dateRangeDisplay}
       />
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">
-        
-        {/* SECTION 1: RISK KPI CARDS */}
-        <div className="grid grid-cols-4 gap-3 select-none">
-          {/* Average Risk Score */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
-            <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Average Risk</span>
-              <Activity className="h-3.5 w-3.5 text-blue-500" />
-            </div>
-            <div>
-              <h4 className="text-base font-black text-slate-800 leading-none">{avgRiskScore}%</h4>
-              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Global Managed Risk</p>
-            </div>
-          </div>
-
-          {/* Critical Risk Clients */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
-            <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Critical Clients</span>
-              <ShieldAlert className="h-3.5 w-3.5 text-rose-500" />
-            </div>
-            <div>
-              <h4 className="text-base font-black text-rose-600 leading-none">{criticalClientsCount} Clients</h4>
-              <p className="text-[6.5px] text-rose-400 font-bold uppercase mt-1">Clients &gt; 70% Risk Level</p>
-            </div>
-          </div>
-
-          {/* Total Security Alerts */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
-            <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Critical Alerts</span>
-              <AlertOctagon className="h-3.5 w-3.5 text-rose-500" />
-            </div>
-            <div>
-              <h4 className="text-base font-black text-rose-600 leading-none">{totalCriticalAlerts} Alerts</h4>
-              <p className="text-[6.5px] text-rose-400 font-bold uppercase mt-1">Unresolved Critical Alerts</p>
-            </div>
-          </div>
-
-          {/* Vulnerable Systems */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
-            <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Vulnerable Nodes</span>
-              <Users className="h-3.5 w-3.5 text-slate-400" />
-            </div>
-            <div>
-              <h4 className="text-base font-black text-slate-800 leading-none">{vulnerableDevicesCount} Nodes</h4>
-              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Systems Missing Patches</p>
-            </div>
-          </div>
-        </div>
-
-        {/* SECTION 2: CHARTS SIDE-BY-SIDE */}
-        <div className="grid grid-cols-2 gap-4 h-[190px] select-none">
-          
-          {/* Risk Level by Customer */}
-          <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-xs flex flex-col justify-between h-[190px]">
-            <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-              <ShieldAlert className="h-4 w-4 text-rose-500" /> 1. ดัชนีความเสี่ยงสูงสุดแยกตามลูกค้า (Customer Risk Scorecard)
-            </h4>
-            <div className="space-y-3 flex-1 flex flex-col justify-center">
-              {clientRiskScores.slice(0, 3).map((item, idx) => {
-                let barColor = 'bg-emerald-500';
-                if (item.riskScore >= 70) barColor = 'bg-rose-500';
-                else if (item.riskScore >= 40) barColor = 'bg-amber-500';
-
-                return (
-                  <div key={idx} className="space-y-1">
-                    <div className="flex justify-between text-[8.5px] font-bold text-slate-600 leading-none">
-                      <span>{item.name}</span>
-                      <span>Risk Score: {item.riskScore}%</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                      <div className={`${barColor} h-full rounded-full`} style={{ width: `${item.riskScore}%` }}></div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Risk Breakdown Category */}
-          <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-xs flex flex-col justify-between h-[190px]">
-            <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-              <Layers className="h-4 w-4 text-blue-500" /> 2. สัดส่วนภัยคุกคามในระบบไอที (Threat Breakdown Structure)
-            </h4>
-            <div className="space-y-2 flex-1 flex flex-col justify-center">
-              {/* Unpatched Systems */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-[8px] font-bold text-slate-600 leading-none">
-                  <span>Unpatched Operating Systems</span>
-                  <span>65% Impact</span>
-                </div>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-[#0f4c81] h-full rounded-full" style={{ width: '65%' }}></div>
-                </div>
-              </div>
-              {/* Security Alerts */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-[8px] font-bold text-slate-600 leading-none">
-                  <span>Critical Security Alerts</span>
-                  <span>25% Impact</span>
-                </div>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-rose-500 h-full rounded-full" style={{ width: '25%' }}></div>
-                </div>
-              </div>
-              {/* Helpdesk tickets */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-[8px] font-bold text-slate-600 leading-none">
-                  <span>Open Helpdesk Incidents</span>
-                  <span>10% Impact</span>
-                </div>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                  <div className="bg-amber-500 h-full rounded-full" style={{ width: '10%' }}></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
 
         {/* SECTION 3: RISK SCORECARD TABLE */}
         <div className="space-y-1.5 flex-1 flex flex-col justify-end">
@@ -270,7 +158,7 @@ export default function RiskScorecardPage({
       {/* Page Footer */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
-        <span>หน้า {pageNumber} จาก 8</span>
+        <span>หน้า {pageNumber} จาก {totalPages}</span>
       </div>
     </div>
   );

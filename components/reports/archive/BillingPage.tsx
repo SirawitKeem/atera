@@ -10,18 +10,22 @@ import {
   Activity,
   Server
 } from 'lucide-react';
-import ReportHeader from './ReportHeader';
+import ReportHeader from '../ReportHeader';
 
 interface BillingPageProps {
   pageNumber: number;
   customers: any[];
   contracts: any[];
+  dateRangeDisplay?: string;
+  totalPages?: number;
 }
 
 export default function BillingPage({
   pageNumber,
   customers,
-  contracts
+  contracts,
+  dateRangeDisplay,
+  totalPages = 9
 }: BillingPageProps) {
 
   // Helper function to calculate contract value dynamically from Atera API schema
@@ -40,7 +44,7 @@ export default function BillingPage({
     const monthlyRate = getContractValue(c);
     if (c.StartDate) {
       const start = new Date(c.StartDate);
-      const now = new Date('2026-08-06T00:00:00Z'); // Current context date
+      const now = new Date();
       const months = (now.getFullYear() - start.getFullYear()) * 12 + now.getMonth() - start.getMonth();
       return monthlyRate * Math.max(1, months);
     }
@@ -60,7 +64,7 @@ export default function BillingPage({
     name: c.CustomerName || 'Client',
     amount: getContractBalance(c),
     status: c.Active ? 'Paid' : 'Pending',
-    period: '01 Jul - 31 Jul 2026'
+    period: dateRangeDisplay || 'N/A'
   })).sort((a, b) => b.amount - a.amount);
 
   return (
@@ -76,7 +80,7 @@ export default function BillingPage({
       {/* Report Header */}
       <ReportHeader 
         title="Billing & Invoicing" 
-        subtitle="Monthly MSP Invoicing & Client Revenue Audit | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        subtitle={`Monthly MSP Invoicing & Client Revenue Audit | Reporting Period: ${dateRangeDisplay || 'N/A'}`} 
       />
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">
@@ -230,7 +234,7 @@ export default function BillingPage({
       {/* Page Footer */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
-        <span>หน้า {pageNumber} จาก 8</span>
+        <span>หน้า {pageNumber} จาก {totalPages}</span>
       </div>
     </div>
   );

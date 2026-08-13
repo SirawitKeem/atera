@@ -10,6 +10,14 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Atera Executive Report",
   description: "IT Infrastructure and Operations Executive Report generated from Atera API",
+  icons: {
+    icon: [
+      { url: "/atera.png" },
+      { url: "/atera.png", type: "image/png" }
+    ],
+    shortcut: "/atera.png",
+    apple: "/atera.png",
+  },
 };
 
 export default function RootLayout({

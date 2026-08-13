@@ -10,6 +10,7 @@ import {
   Laptop, 
   Server, 
   Activity,
+  ShieldCheck,
   Info,
   TrendingUp
 } from 'lucide-react';
@@ -20,6 +21,8 @@ interface DevicesPageProps {
   customers: any[];
   agents: any[];
   contracts: any[];
+  contacts?: any[];
+  totalPages?: number;
   dateRangeDisplay?: string;
 }
 
@@ -27,45 +30,37 @@ export default function DevicesPage({
   pageNumber,
   customers,
   agents,
-  contracts
-,
+  contracts,
+  contacts = [],
+  totalPages = 9,
   dateRangeDisplay
 }: DevicesPageProps) {
-
   const totalCustomers = customers.length;
-  const totalDevices = agents.length;
-
-  // 1. Customer Summary metrics
-  const activeCustomersCount = customers.filter(c => {
-    const id = c.CustomerID || c.id;
-    return agents.some(a => a.CustomerID === id || a.customerId === id);
-  }).length;
-  const inactiveCustomersCount = Math.max(0, totalCustomers - activeCustomersCount);
-  const totalContactsCount = totalCustomers * 2; // derived contact count
+  const activeCustomersCount = customers.length;
+  const inactiveCustomersCount = 0;
   const totalContractsCount = contracts.length;
-
-  // 2. Device Summary metrics
+  const totalDevices = agents.length;
   const winCount = agents.filter(a => (a.OS || a.os || '').toLowerCase().includes('win')).length;
   const macCount = agents.filter(a => (a.OS || a.os || '').toLowerCase().includes('mac') || (a.OS || a.os || '').toLowerCase().includes('darwin')).length;
   const linuxCount = agents.filter(a => (a.OS || a.os || '').toLowerCase().includes('linux') || (a.OS || a.os || '').toLowerCase().includes('ubuntu')).length;
   const otherCount = Math.max(0, totalDevices - (winCount + macCount + linuxCount));
-  
+
   const serverCount = agents.filter(a => {
     const type = (a.DeviceType || a.deviceType || '').toLowerCase();
     const os = (a.OS || a.os || '').toLowerCase();
     return type.includes('server') || type.includes('controller') || os.includes('server');
   }).length;
-  
+
   const workstationCount = agents.filter(a => {
     const type = (a.DeviceType || a.deviceType || '').toLowerCase();
     const os = (a.OS || a.os || '').toLowerCase();
     return (type.includes('workstation') || type.includes('desktop') || type.includes('laptop') || type === '') && !os.includes('server');
   }).length;
 
-  // Online Connectivity Rate
   const onlineCount = agents.filter(a => a.Online === true || a.online === true || String(a.Online).toLowerCase() === 'true').length;
   const offlineCount = totalDevices - onlineCount;
   const onlineRatio = totalDevices > 0 ? Math.round((onlineCount / totalDevices) * 100) : 100;
+  const totalContactsCount = contacts.length;
 
   // 3. Process Customers data (Device counts per customer)
   const customerList = customers.map((c, idx) => {
@@ -124,7 +119,7 @@ export default function DevicesPage({
       {/* Report Header */}
       <ReportHeader 
         title="Infrastructure & Customer Overview" 
-        subtitle="Monthly MSP Overview | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        subtitle={`Monthly MSP Overview | Reporting Period: ${dateRangeDisplay || 'N/A'}`} 
         dateRangeDisplay={dateRangeDisplay}
       />
 
@@ -226,27 +221,6 @@ export default function DevicesPage({
                   <Server className="h-3.5 w-3.5 text-indigo-500" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-black text-slate-800 leading-none">{serverCount} Servers</h4>
-                  <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Active Nodes</p>
-                </div>
-              </div>
-
-              {/* Online Agents */}
-              <div className="bg-white border border-slate-100 rounded-xl p-2 flex flex-col justify-between shadow-xs h-[74px]">
-                <div className="flex items-center justify-between">
-                  <span className="text-[7px] font-extrabold text-slate-400 uppercase leading-none">Online Agents</span>
-                  <UserCheck className="h-3.5 w-3.5 text-emerald-500" />
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-emerald-600 leading-none">{onlineCount} Agents</h4>
-                  <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Offline: {offlineCount}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-
         {/* SECTION 2: CHARTS SIDE-BY-SIDE (Fixed Height layout to resolve vertical stretching) */}
         <div className="grid grid-cols-2 gap-4 h-[210px] select-none">
           
@@ -414,7 +388,7 @@ export default function DevicesPage({
       {/* Page Footer */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
-        <span>หน้า {pageNumber} จาก 8</span>
+        <span>หน้า {pageNumber} จาก {totalPages}</span>
       </div>
     </div>
   );

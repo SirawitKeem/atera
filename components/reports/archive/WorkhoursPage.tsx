@@ -10,18 +10,22 @@ import {
   Briefcase,
   Server
 } from 'lucide-react';
-import ReportHeader from './ReportHeader';
+import ReportHeader from '../ReportHeader';
 
 interface WorkhoursPageProps {
   pageNumber: number;
   workhours: any[];
   tickets: any[];
+  dateRangeDisplay?: string;
+  totalPages?: number;
 }
 
 export default function WorkhoursPage({
   pageNumber,
   workhours,
-  tickets
+  tickets,
+  dateRangeDisplay,
+  totalPages = 9
 }: WorkhoursPageProps) {
 
   const totalLoggedHours = workhours.reduce((sum, w) => sum + (w.LoggedHours || w.loggedHours || 0), 0);
@@ -62,7 +66,7 @@ export default function WorkhoursPage({
       {/* Report Header */}
       <ReportHeader 
         title="Workhours & SLA" 
-        subtitle="Helpdesk Operations & Technician Efficiency | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        subtitle={`Helpdesk Operations & Technician Efficiency | Reporting Period: ${dateRangeDisplay || 'N/A'}`} 
       />
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">
@@ -232,7 +236,7 @@ export default function WorkhoursPage({
       {/* Page Footer */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
-        <span>หน้า {pageNumber} จาก 8</span>
+        <span>หน้า {pageNumber} จาก {totalPages}</span>
       </div>
     </div>
   );

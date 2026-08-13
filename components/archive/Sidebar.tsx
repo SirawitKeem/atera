@@ -17,9 +17,18 @@ import {
 interface SidebarProps {
   activeItem?: string;
   onItemClick?: (item: string) => void;
+  workspaceName?: string;
+  userRole?: string;
+  userInitials?: string;
 }
 
-export default function Sidebar({ activeItem = 'Overview', onItemClick }: SidebarProps) {
+export default function Sidebar({ 
+  activeItem = 'Overview', 
+  onItemClick,
+  workspaceName = 'Workspace',
+  userRole = 'Atera IT Admin',
+  userInitials = 'KM'
+}: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems = [
@@ -89,12 +98,12 @@ export default function Sidebar({ activeItem = 'Overview', onItemClick }: Sideba
       <div className="p-4 border-t border-slate-100 space-y-2 bg-slate-50/50">
         <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : 'px-2 py-1.5'}`}>
           <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm flex-shrink-0 select-none">
-            KM
+            {userInitials}
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
-              <span className="block text-xs font-bold text-slate-800 truncate leading-none">Keem Workspace</span>
-              <span className="block text-[10px] text-slate-400 mt-1 truncate">Atera IT Admin</span>
+              <span className="block text-xs font-bold text-slate-800 truncate leading-none">{workspaceName}</span>
+              <span className="block text-[10px] text-slate-400 mt-1 truncate">{userRole}</span>
             </div>
           )}
         </div>
