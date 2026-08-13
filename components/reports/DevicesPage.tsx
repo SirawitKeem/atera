@@ -221,6 +221,14 @@ export default function DevicesPage({
                   <Server className="h-3.5 w-3.5 text-indigo-500" />
                 </div>
                 <div>
+                  <h4 className="text-xs font-black text-slate-800 leading-none">{serverCount} Devices</h4>
+                  <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Win & Mac & Linux</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* SECTION 2: CHARTS SIDE-BY-SIDE (Fixed Height layout to resolve vertical stretching) */}
         <div className="grid grid-cols-2 gap-4 h-[210px] select-none">
           

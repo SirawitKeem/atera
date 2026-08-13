@@ -2,14 +2,16 @@
 
 import React from 'react';
 import { 
-  Users, 
   Monitor, 
   Ticket, 
   AlertOctagon, 
-  ShieldAlert, 
-  Activity, 
-  AlertCircle,
-  Info
+  Users2,
+  Bell,
+  Clipboard,
+  HardDrive,
+  Laptop,
+  Server,
+  Wifi
 } from 'lucide-react';
 import ReportHeader from './ReportHeader';
 
@@ -33,13 +35,8 @@ interface SummaryPageProps {
 
 export default function SummaryPage({
   pageNumber,
-  customers,
   agents,
-  tickets,
   alerts,
-  contracts,
-  workhours,
-  onlineRatio,
   totalCustomers,
   openTickets,
   totalDevices,
@@ -49,108 +46,40 @@ export default function SummaryPage({
   dateRangeDisplay
 }: SummaryPageProps) {
 
-  // Helper to calculate age of a ticket in English
-  const getTicketAge = (createdDateStr: string) => {
-    if (!createdDateStr) return '1 day ago';
-    const createdDate = new Date(createdDateStr);
-    
-    const now = new Date();
-    const diffMs = now.getTime() - createdDate.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    
-    if (diffDays <= 0) {
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      return `${Math.max(1, diffHours)} hr${diffHours > 1 ? 's' : ''} ago`;
-    }
-    return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  const normalizeDeviceTypeValue = (value: unknown) => {
+    const raw = String(value ?? '').trim();
+    return raw.replace(/\s+/g, ' ');
   };
 
-  // 1. Calculate KPI Metrics
-  const onlineCount = agents.filter(a => a.Online === true || a.online === true || String(a.Online).toLowerCase() === 'true').length;
-  const offlineCount = agents.length - onlineCount;
-  
-  const criticalAlertsCount = alerts.filter(a => (a.Severity || a.severity || '').toLowerCase() === 'critical').length;
+  const deviceTypeCounts = agents.reduce<Record<string, number>>((acc, agent) => {
+    const candidates = [
+      agent.DeviceType,
+      agent.deviceType,
+      agent.Type,
+      agent.type,
+      agent.AgentType,
+      agent.agentType,
+      agent.DeviceCategory,
+      agent.deviceCategory,
+      agent.OperatingSystem,
+      agent.operatingSystem,
+      agent.OS,
+      agent.os,
+      agent.Name,
+      agent.name
+    ];
 
-  // 2. Process Customers and sort them by Device Count descending
-  const sortedCustomers = customers.map((c, idx) => {
-    const id = c.CustomerID || c.id || idx + 1;
-    const name = c.CustomerName || c.name || 'N/A';
-    
-    // Count devices
-    const custAgents = agents.filter(a => a.CustomerID === id || a.customerId === id);
-    const totalCustDevices = custAgents.length;
+    const selected = candidates.find(v => normalizeDeviceTypeValue(v) !== '');
+    const label = normalizeDeviceTypeValue(selected) || 'Unspecified';
 
-    // Count Alerts for this customer
-    const custAlerts = alerts.filter(a => a.CustomerID === id || a.customerId === id).length;
+    acc[label] = (acc[label] || 0) + 1;
+    return acc;
+  }, {});
 
-    // Count Tickets for this customer
-    const custTickets = tickets.filter(t => t.CustomerID === id || t.customerId === id).length;
-
-    // Count online devices for this customer to calculate availability
-    const onlineCustCount = custAgents.filter(a => a.Online === true || a.online === true || String(a.Online).toLowerCase() === 'true').length;
-    const custAvailability = totalCustDevices > 0 ? Math.round((onlineCustCount / totalCustDevices) * 100) : 100;
-
-    // Determine Risk level dynamically based on alerts/tickets count
-    let riskLevel = 'LOW';
-    if (custAlerts >= 2 || custTickets >= 3) riskLevel = 'HIGH';
-    else if (custAlerts >= 1 || custTickets >= 1) riskLevel = 'MEDIUM';
-
-    return {
-      id,
-      name,
-      totalCustDevices,
-      custAlerts,
-      custTickets,
-      custAvailability,
-      riskLevel
-    };
-  }).sort((a, b) => b.totalCustDevices - a.totalCustDevices);
-
-  const topCustomers = sortedCustomers.slice(0, 8); // TOP 8 for grid layout
-
-  // 3. Filter Active Tickets (Open/New/Pending) and cap at TOP 8
-  const activeTickets = tickets.filter(t => {
-    const status = (t.TicketStatus || t.status || '').toLowerCase();
-    return status === 'open' || status === 'new' || status === 'pending';
-  }).slice(0, 8);
-
-  // Health Score Category
-  const getHealthCategory = (score: number) => {
-    if (score >= 95) return 'Excellent';
-    if (score >= 90) return 'Good';
-    if (score >= 75) return 'Warning';
-    return 'Need Attention';
-  };
-
-  const healthCategory = getHealthCategory(onlineRatio);
-
-  // Overall Risk calculation
-  const getOverallRisk = (criticalCount: number) => {
-    if (criticalCount >= 5) return 'CRITICAL';
-    if (criticalCount >= 2) return 'HIGH';
-    if (criticalCount >= 1) return 'MEDIUM';
-    return 'LOW';
-  };
-
-  const overallRisk = getOverallRisk(criticalAlertsCount);
-
-  // Render Risk Progress Slider line
-  const renderRiskLine = (risk: string) => {
-    const levels = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
-    const activeIdx = levels.indexOf(risk);
-    
-    return (
-      <div className="flex items-center gap-1.5 text-[8.5px] font-black font-mono select-none">
-        <span className={activeIdx === 0 ? 'text-emerald-600 font-extrabold' : 'text-slate-300'}>LOW</span>
-        <span className="text-slate-300">──</span>
-        <span className={activeIdx === 1 ? 'text-blue-600 font-extrabold' : 'text-slate-300'}>MED</span>
-        <span className="text-slate-300">──</span>
-        <span className={activeIdx === 2 ? 'text-amber-600 font-extrabold' : 'text-slate-300'}>HIGH</span>
-        <span className="text-slate-300">──</span>
-        <span className={activeIdx === 3 ? 'text-rose-600 font-black' : 'text-slate-300'}>CRITICAL</span>
-      </div>
-    );
-  };
+  const deviceTypeBreakdown = Object.entries(deviceTypeCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4);
+  const totalDeviceCount = Math.max(agents.length, 1);
 
   return (
     <div 
@@ -171,146 +100,208 @@ export default function SummaryPage({
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-2">
 
-        {/* SECTION 2: HEALTH SCORE & RISK METER (100% Symmetric Layout & Font Sizes) */}
-        <div className="grid grid-cols-2 gap-4 select-none">
-          {/* Overall Health Score Card */}
-          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs h-[92px]">
-            <div className="flex items-baseline justify-between">
-              <h3 className="text-xl font-black text-slate-800 leading-none">{onlineRatio}%</h3>
-              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[8.5px] font-black border ${
-                onlineRatio >= 95 
-                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                  : onlineRatio >= 90
-                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                  : onlineRatio >= 75
-                  ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                  : 'bg-rose-50 text-rose-700 border border-rose-200'
-              }`}>
-                {healthCategory}
-              </span>
+        {/* SECTION 1: KPI CARDS (4 Cards: Customers, Devices, Alerts, Tickets) */}
+        <div className="grid grid-cols-4 gap-3 select-none">
+          
+          {/* Card 1: Customers */}
+          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs">
+            <div className="flex items-start justify-between">
+              <div className="flex flex-col flex-1">
+                <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider mb-1">Customers</span>
+                <h3 className="text-3xl font-black text-slate-900 leading-none">{totalCustomers}</h3>
+                <p className="text-[10px] text-slate-500 font-medium mt-1">Total Customers</p>
+              </div>
+              <Users2 className="h-8 w-8 text-blue-500 flex-shrink-0" strokeWidth={1.5} />
             </div>
-            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-              <div className={`h-full rounded-full ${
-                onlineRatio >= 90 ? 'bg-emerald-500' : onlineRatio >= 75 ? 'bg-amber-500' : 'bg-rose-500'
-              }`} style={{ width: `${onlineRatio}%` }}></div>
-            </div>
-            <span className="text-[8.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-              Overall Infrastructure Health
-            </span>
           </div>
 
-          {/* Overall Risk Status Card */}
-          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs h-[92px]">
-            <div className="flex items-baseline justify-between">
-              <h3 className={`text-xl font-black leading-none ${
-                overallRisk === 'CRITICAL' ? 'text-rose-600' : 'text-slate-800'
-              }`}>{overallRisk}</h3>
-              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[8.5px] font-black border bg-slate-50 text-slate-600 border-slate-200">
-                Risk Status
-              </span>
+          {/* Card 2: Devices */}
+          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs">
+            <div className="flex items-start justify-between">
+              <div className="flex flex-col flex-1">
+                <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider mb-1">Devices</span>
+                <h3 className="text-3xl font-black text-slate-900 leading-none">{totalDevices.toLocaleString()}</h3>
+                <p className="text-[10px] text-slate-500 font-medium mt-1">Total Devices</p>
+              </div>
+              <Monitor className="h-8 w-8 text-blue-500 flex-shrink-0" strokeWidth={1.5} />
             </div>
-            <div>
-              {renderRiskLine(overallRisk)}
-            </div>
-            <span className="text-[8.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-              Overall Risk Status
-            </span>
           </div>
+
+          {/* Card 3: Alerts */}
+          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs">
+            <div className="flex items-start justify-between">
+              <div className="flex flex-col flex-1">
+                <span className="text-[11px] font-bold text-orange-500 uppercase tracking-wider mb-1">Alerts</span>
+                <h3 className="text-3xl font-black text-slate-900 leading-none">{alerts.length}</h3>
+                <p className="text-[10px] text-slate-500 font-medium mt-1">Total Alerts</p>
+              </div>
+              <Bell className="h-8 w-8 text-orange-500 flex-shrink-0" strokeWidth={1.5} />
+            </div>
+          </div>
+
+          {/* Card 4: Tickets */}
+          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs">
+            <div className="flex items-start justify-between">
+              <div className="flex flex-col flex-1">
+                <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-wider mb-1">Tickets</span>
+                <h3 className="text-3xl font-black text-slate-900 leading-none">{totalTickets}</h3>
+                <p className="text-[10px] text-slate-500 font-medium mt-1">Total All Tickets</p>
+              </div>
+              <Clipboard className="h-8 w-8 text-emerald-500 flex-shrink-0" strokeWidth={1.5} />
+            </div>
+          </div>
+
         </div>
 
-        {/* SECTION 3: TOP CLIENTS AND ACTIVE TICKETS (Compact Spacing & Dynamic Columns) */}
-        <div className="flex justify-between gap-4 flex-1">
+        {/* SECTION 2: SERVICE DESK & MONITORING SUMMARY (Side-by-side) */}
+        <div className="grid grid-cols-2 gap-4 select-none">
           
-          {/* Top Customers (Left Column) */}
-          <div className="w-[49%] flex flex-col h-full">
-            <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 select-none mb-1.5">
-              <Users className="h-3.5 w-3.5 text-blue-500" /> 1. สรุปปริมาณอุปกรณ์แยกรายลูกค้า (Top Clients Inventory)
-            </h3>
-            <div className="border border-slate-100 rounded-lg overflow-hidden bg-white/70 backdrop-blur-xs shadow-xs flex-1">
-              <table className="min-w-full divide-y divide-slate-100 text-[10px] text-left">
-                <thead className="bg-slate-50/80 text-slate-500 font-bold uppercase tracking-wider text-[7.5px]">
-                  <tr>
-                    <th className="px-2.5 py-1.5 w-[35%]">Customer</th>
-                    <th className="px-2.5 py-1.5 text-center w-[15%]">Devices</th>
-                    <th className="px-2.5 py-1.5 text-center w-[15%]">Alerts</th>
-                    <th className="px-2.5 py-1.5 text-center w-[15%]">Tickets</th>
-                    <th className="px-2.5 py-1.5 text-center w-[10%]">Risk</th>
-                    <th className="px-2.5 py-1.5 text-right w-[10%]">Avail</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700 font-semibold">
-                  {topCustomers.map((c, idx) => {
-                    let riskColor = 'text-emerald-600';
-                    if (c.riskLevel === 'HIGH') riskColor = 'text-amber-500 font-bold';
-                    else if (c.riskLevel === 'MEDIUM') riskColor = 'text-blue-500';
+          {/* Tickets Overview Card */}
+          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs h-[120px]">
+            <div className="flex items-center justify-between border-b border-slate-50 pb-2 mb-2">
+              <div className="flex items-center gap-2">
+                <Ticket className="h-4 w-4 text-emerald-500" />
+                <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-wider">Tickets & Service Desk</h4>
+              </div>
+              <span className="text-[9px] font-bold text-slate-500">
+                Resolution Rate: {totalTickets > 0 ? Math.round((resolvedTickets / totalTickets) * 100) : 0}%
+              </span>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2 flex-1">
+              <div className="flex flex-col justify-center">
+                <span className="text-[8px] font-extrabold text-slate-400 uppercase">Total Tickets</span>
+                <span className="text-lg font-black text-slate-800 leading-none">{totalTickets}</span>
+              </div>
+              <div className="flex flex-col justify-center border-x border-slate-100 px-2">
+                <span className="text-[8px] font-extrabold text-slate-400 uppercase">Open / Pending</span>
+                <span className="text-lg font-black text-rose-500 leading-none">{openTickets}</span>
+              </div>
+              <div className="flex flex-col justify-center pl-2">
+                <span className="text-[8px] font-extrabold text-slate-400 uppercase">Resolved</span>
+                <span className="text-lg font-black text-emerald-600 leading-none">{resolvedTickets}</span>
+              </div>
+            </div>
 
-                    return (
-                      <tr key={c.id} className="hover:bg-slate-50/20 transition-colors">
-                        <td className="px-2.5 py-2 font-bold text-slate-800 truncate max-w-[85px]">{c.name}</td>
-                        <td className="px-2.5 py-2 text-center text-slate-900 font-extrabold">{c.totalCustDevices}</td>
-                        <td className="px-2.5 py-2 text-center text-slate-400 font-medium">{c.custAlerts}</td>
-                        <td className="px-2.5 py-2 text-center text-slate-400 font-medium">{c.custTickets}</td>
-                        <td className={`px-2.5 py-2 text-center ${riskColor}`}>{c.riskLevel}</td>
-                        <td className="px-2.5 py-2 text-right text-slate-800 font-bold">{c.custAvailability}%</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-2">
+              <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${totalTickets > 0 ? Math.round((resolvedTickets / totalTickets) * 100) : 0}%` }}></div>
             </div>
           </div>
 
-          {/* Top Active Tickets Table (Right Column) */}
-          <div className="w-[49%] flex flex-col h-full">
-            <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 select-none mb-1.5">
-              <Ticket className="h-3.5 w-3.5 text-blue-500" /> 2. รายการตั๋วปัญหาแจ้งซ่อม RMM ล่าสุด (Top Active Tickets)
-            </h3>
-            <div className="border border-slate-100 rounded-lg overflow-hidden bg-white/70 backdrop-blur-xs shadow-xs flex-1">
-              <table className="min-w-full divide-y divide-slate-100 text-[10px] text-left">
-                <thead className="bg-slate-50/80 text-slate-500 font-bold uppercase tracking-wider text-[7.5px]">
-                  <tr>
-                    <th className="px-2.5 py-1.5 w-[30%]">Ticket</th>
-                    <th className="px-2.5 py-1.5 w-[25%]">Customer</th>
-                    <th className="px-2.5 py-1.5 text-center w-[15%]">Priority</th>
-                    <th className="px-2.5 py-1.5 text-center w-[15%]">Status</th>
-                    <th className="px-2.5 py-1.5 text-right w-[15%]">Age</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 text-slate-700 font-semibold">
-                  {activeTickets.map((ticket, idx) => {
-                    const title = ticket.TicketTitle || ticket.title || 'No Title';
-                    const customer = ticket.CustomerName || 'N/A';
-                    const priority = ticket.TicketPriority || ticket.priority || 'Low';
-                    const status = ticket.TicketStatus || ticket.status || 'Open';
-                    const age = getTicketAge(ticket.CreatedDate || ticket.createdDate);
-
-                    let priorityColor = 'text-slate-400';
-                    if (priority === 'Critical') priorityColor = 'text-rose-600 font-extrabold';
-                    else if (priority === 'High') priorityColor = 'text-orange-500';
-                    else if (priority === 'Medium') priorityColor = 'text-blue-500';
-
-                    return (
-                      <tr key={idx} className="hover:bg-slate-50/20 transition-colors">
-                        <td className="px-2.5 py-2 font-bold text-slate-800 truncate max-w-[100px]" title={title}>{title}</td>
-                        <td className="px-2.5 py-2 text-slate-500 truncate max-w-[80px]" title={customer}>{customer}</td>
-                        <td className={`px-2.5 py-2 text-center font-bold ${priorityColor}`}>{priority}</td>
-                        <td className="px-2.5 py-2 text-center text-slate-400 font-medium">{status}</td>
-                        <td className="px-2.5 py-2 text-right text-slate-500 font-mono text-[9px] whitespace-nowrap">{age}</td>
-                      </tr>
-                    );
-                  })}
-                  {activeTickets.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="px-2.5 py-4 text-center text-slate-400 font-medium">
-                        ไม่มีตั๋วงานค้างซ่อมในระบบ
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+          {/* Alerts Overview Card */}
+          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs h-[120px]">
+            <div className="flex items-center justify-between border-b border-slate-50 pb-2 mb-2">
+              <div className="flex items-center gap-2">
+                <AlertOctagon className="h-4 w-4 text-orange-500" />
+                <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-wider">Alerts & Monitoring</h4>
+              </div>
+              <span className="text-[9px] font-bold text-slate-500">
+                Total: {alerts.length} Active
+              </span>
             </div>
+
+            <div className="grid grid-cols-3 gap-2 flex-1">
+              <div className="flex flex-col justify-center">
+                <span className="text-[8px] font-extrabold text-rose-500 uppercase flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>
+                  Critical
+                </span>
+                <span className="text-lg font-black text-rose-600 leading-none">
+                  {alerts.filter(a => (a.Severity || a.severity || '').toLowerCase() === 'critical').length}
+                </span>
+              </div>
+              <div className="flex flex-col justify-center border-x border-slate-100 px-2">
+                <span className="text-[8px] font-extrabold text-amber-500 uppercase flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block"></span>
+                  Warning
+                </span>
+                <span className="text-lg font-black text-amber-600 leading-none">
+                  {alerts.filter(a => (a.Severity || a.severity || '').toLowerCase() === 'warning').length}
+                </span>
+              </div>
+              <div className="flex flex-col justify-center pl-2">
+                <span className="text-[8px] font-extrabold text-blue-500 uppercase flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
+                  Information
+                </span>
+                <span className="text-lg font-black text-blue-600 leading-none">
+                  {alerts.filter(a => (a.Severity || a.severity || '').toLowerCase() === 'info').length}
+                </span>
+              </div>
+            </div>
+            
+            <p className="text-[8px] text-slate-400 font-bold mt-2 uppercase leading-none">
+              ระบบตรวจสอบเหตุการณ์แบบเรียลไทม์ 24/7
+            </p>
           </div>
 
+        </div>
+
+        {/* SECTION 3: DEVICE TYPE DISTRIBUTION (Full Width) */}
+        <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs flex-1">
+          <div>
+            <div className="flex items-center gap-2 border-b border-slate-50 pb-2 mb-2">
+              <Monitor className="h-4 w-4 text-blue-500" />
+              <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-wider">Device Type Breakdown</h4>
+            </div>
+
+            <table className="min-w-full text-[9.5px] text-left text-slate-700">
+              <thead>
+                <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[8px]">
+                  <th className="pb-1.5 w-[50%]">Device Type</th>
+                  <th className="pb-1.5 text-center w-[20%]">Count</th>
+                  <th className="pb-1.5 text-right w-[30%]">% of Total</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {deviceTypeBreakdown.length > 0 ? (
+                  deviceTypeBreakdown.map(([label, count]) => {
+                    const percentage = totalDeviceCount > 0 ? Math.round((count / totalDeviceCount) * 1000) / 10 : 0;
+                    const normalizedLabel = String(label).toLowerCase();
+
+                    const getTypeIcon = () => {
+                      if (normalizedLabel.includes('windows') || normalizedLabel.includes('win')) return <Monitor className="h-4 w-4 text-blue-500 flex-shrink-0" />;
+                      if (normalizedLabel.includes('linux') || normalizedLabel.includes('ubuntu') || normalizedLabel.includes('debian')) return <HardDrive className="h-4 w-4 text-emerald-500 flex-shrink-0" />;
+                      if (normalizedLabel.includes('server') || normalizedLabel.includes('controller')) return <Server className="h-4 w-4 text-indigo-500 flex-shrink-0" />;
+                      if (normalizedLabel.includes('mac') || normalizedLabel.includes('os x')) return <Laptop className="h-4 w-4 text-slate-600 flex-shrink-0" />;
+                      if (normalizedLabel.includes('network')) return <Wifi className="h-4 w-4 text-amber-500 flex-shrink-0" />;
+                      return <Monitor className="h-4 w-4 text-slate-400 flex-shrink-0" />;
+                    };
+
+                    return (
+                      <tr key={label} className="align-middle">
+                        <td className="py-3.5 font-bold text-slate-800">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {getTypeIcon()}
+                            <span className="truncate" title={label}>{label}</span>
+                          </div>
+                        </td>
+                        <td className="py-3.5 text-center text-slate-800 font-black text-xs">{count}</td>
+                        <td className="py-3.5 text-right">
+                          <div className="flex items-center justify-end gap-3">
+                            <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full bg-blue-500" style={{ width: `${Math.min(percentage, 100)}%` }} />
+                            </div>
+                            <span className="w-10 text-right text-slate-800 font-black text-xs">{percentage}%</span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td className="py-3.5 text-slate-400 font-semibold">No device type data</td>
+                    <td className="py-3.5 text-center text-slate-800 font-black">0</td>
+                    <td className="py-3.5 text-right text-slate-700 font-bold">0%</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          
+          <p className="text-[8px] text-slate-400 font-bold uppercase leading-none mt-4">
+            รวม RMM Agents ทั้งหมด {totalDevices} เครื่องในระบบ
+          </p>
         </div>
 
 

@@ -9,6 +9,8 @@ interface CoverPageProps {
   totalAlerts: number;
   currentDate: string;
   reportPeriod?: { start: string; end: string };
+  reportTitle?: string;
+  companyName?: string;
 }
 
 export default function CoverPage({
@@ -17,7 +19,9 @@ export default function CoverPage({
   totalTickets,
   totalAlerts,
   currentDate,
-  reportPeriod
+  reportPeriod,
+  reportTitle,
+  companyName
 }: CoverPageProps) {
   const formatDate = (dateStr: string, isStart: boolean) => {
     const date = new Date(dateStr);
@@ -53,14 +57,14 @@ export default function CoverPage({
       {/* Middle Left: Title and Date Period */}
       <div className="my-auto space-y-6 max-w-sm pt-8">
         <div className="space-y-1">
-          <span className="block text-[#E20074] font-black tracking-widest text-[20px] uppercase">
-            ATERA
+          <span className="block text-[#E20074] font-black tracking-widest text-[20px] uppercase truncate max-w-sm">
+            {companyName ? companyName : 'ATERA'}
           </span>
-          <h1 className="text-[#0F172A] font-black text-[72px] tracking-tight leading-none uppercase">
-            MONTHLY
+          <h1 className="text-[#0F172A] font-black text-[56px] tracking-tight leading-none uppercase truncate max-w-sm">
+            {reportTitle ? reportTitle.split(' ')[0] : 'MONTHLY'}
           </h1>
-          <h1 className="text-[#E20074] font-black text-[72px] tracking-tight leading-none uppercase">
-            REPORT
+          <h1 className="text-[#E20074] font-black text-[56px] tracking-tight leading-none uppercase truncate max-w-sm">
+            {reportTitle ? reportTitle.split(' ').slice(1).join(' ') : 'REPORT'}
           </h1>
         </div>
         

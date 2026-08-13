@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Printer, Calendar, Mail } from 'lucide-react';
-import EmailScheduleModal from './EmailScheduleModal';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Printer, Settings, Mail } from 'lucide-react';
+import SettingsWizardModal from './SettingsWizardModal';
 import CoverPage from './reports/CoverPage';
 import SummaryPage from './reports/SummaryPage';
 import DevicesPage from './reports/DevicesPage';
@@ -44,7 +44,32 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
 
   const [startDate, setStartDate] = useState(formatISODate(thirtyDaysAgo));
   const [endDate, setEndDate] = useState(formatISODate(today));
-  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
+  // Dynamic report details
+  const [reportTitle, setReportTitle] = useState('Executive Summary');
+  const [reportSubtitle, setReportSubtitle] = useState('Monthly Executive Report');
+  const [companyName, setCompanyName] = useState(data.accountInfo?.CompanyName || 'Atera Client');
+
+  // Selected step for Settings Wizard
+  const [wizardStep, setWizardStep] = useState(1);
+
+  // Load saved report settings on mount
+  useEffect(() => {
+    const savedConfig = localStorage.getItem('atera_unified_report_settings');
+    if (savedConfig) {
+      try {
+        const parsed = JSON.parse(savedConfig);
+        if (parsed.reportTitle) setReportTitle(parsed.reportTitle);
+        if (parsed.reportSubtitle) setReportSubtitle(parsed.reportSubtitle);
+        if (parsed.companyName) setCompanyName(parsed.companyName);
+        if (parsed.startDate) setStartDate(parsed.startDate);
+        if (parsed.endDate) setEndDate(parsed.endDate);
+      } catch (e) {
+        console.error('Failed to load saved report settings', e);
+      }
+    }
+  }, [data.accountInfo?.CompanyName]);
 
   const reportPeriod = useMemo(() => ({ start: startDate, end: endDate }), [startDate, endDate]);
 
@@ -98,12 +123,27 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
   const onlineDevices = agents.filter(a => a.Online === true || a.online === true || String(a.Online).toLowerCase() === 'true').length;
   const onlineRatio = totalDevices > 0 ? Math.round((onlineDevices / totalDevices) * 100) : 100;
 
+  const normalizeStatus = (value: unknown) => String(value ?? '').trim().toLowerCase();
+  const isOpenTicket = (ticket: Record<string, unknown>) => {
+    const status = normalizeStatus(ticket.TicketStatus ?? ticket.status ?? ticket.Status ?? ticket.StatusName);
+    return ['open', 'new', 'pending', 'in progress', 'in-progress', 'waiting', 'waiting on user', 'on hold', 'active'].includes(status)
+      || status.includes('open')
+      || status.includes('pending')
+      || status.includes('progress');
+  };
+
+  const isResolvedTicket = (ticket: Record<string, unknown>) => {
+    const status = normalizeStatus(ticket.TicketStatus ?? ticket.status ?? ticket.Status ?? ticket.StatusName);
+    return ['resolved', 'closed', 'completed', 'done', 'solved', 'cancelled', 'canceled'].includes(status)
+      || status.includes('resolved')
+      || status.includes('closed')
+      || status.includes('completed')
+      || status.includes('solved');
+  };
+
   const totalTickets = filteredTickets.length;
-  const openTickets = filteredTickets.filter(t => {
-    const status = (t.TicketStatus || t.status || '').toLowerCase();
-    return status === 'open' || status === 'new' || status === 'pending';
-  }).length;
-  const resolvedTickets = totalTickets - openTickets;
+  const openTickets = filteredTickets.filter(ticket => isOpenTicket(ticket as Record<string, unknown>)).length;
+  const resolvedTickets = filteredTickets.filter(ticket => isResolvedTicket(ticket as Record<string, unknown>)).length;
   const criticalTickets = filteredTickets.filter(t => {
     const priority = (t.TicketPriority || t.priority || '').toLowerCase();
     return priority === 'critical';
@@ -120,81 +160,93 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
     <div className="a4-container min-h-screen">
       
       {/* Floating Action Bar (Hidden in Print) */}
-      <div className="no-print sticky top-4 z-50 bg-white/80 backdrop-blur-xl text-slate-800 px-5 py-4 rounded-2xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.08)] w-full max-w-5xl mx-auto flex items-center justify-between transition-all duration-300">
+      <div className="no-print sticky top-4 z-50 bg-white/90 backdrop-blur-xl text-slate-800 px-6 py-3.5 rounded-2xl border border-slate-200/60 shadow-[0_12px_40px_rgba(0,0,0,0.1)] flex items-center justify-between transition-all duration-300" style={{ width: '210mm', marginLeft: 'auto', marginRight: 'auto' }}>
         
-        {/* Left side: Status */}
-        <div className="flex items-center gap-4">
-          <div className="relative flex items-center justify-center">
-            <div className="absolute h-4 w-4 rounded-full bg-emerald-400 animate-ping opacity-75" />
-            <div className="relative h-3 w-3 rounded-full bg-emerald-500 shadow-sm" />
+        {/* Left side: Logo + Status */}
+        <div className="flex items-center gap-5">
+          
+          {/* Atera Logo */}
+          <div className="flex-shrink-0 pr-4 border-r border-slate-200/60">
+            <img 
+              src="/atera-box-logo.png" 
+              alt="Atera Logo" 
+              className="h-8 w-auto object-contain"
+            />
           </div>
-          <div className="flex flex-col">
-            <h3 className="font-bold text-sm text-slate-800 tracking-tight">
-              Live API Connected
-            </h3>
-            <p className="text-[11px] text-slate-500 font-medium">
-              {errorMsg ? errorMsg : 'เชื่อมต่อและดึงข้อมูลจาก Atera เรียลไทม์'}
-            </p>
+
+          {/* Status Indicator */}
+          <div className="flex items-center gap-3">
+            <div className="relative flex items-center justify-center">
+              <div className="absolute h-3 w-3 rounded-full bg-emerald-400 animate-pulse opacity-75" />
+              <div className="relative h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm" />
+            </div>
+            <div className="flex flex-col">
+              <h3 className="font-bold text-sm text-slate-900 tracking-tight">
+                Live API Connected
+              </h3>
+              <p className="text-[10.5px] text-slate-500 font-medium">
+                {errorMsg ? errorMsg : 'เชื่อมต่อและดึงข้อมูลจาก Atera เรียลไทม์'}
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Right side: Controls */}
+        {/* Right side: Action Buttons */}
         <div className="flex items-center gap-3">
           
-          {/* Date Filter Group */}
-          <div className="flex items-center bg-slate-100/70 p-1.5 rounded-xl border border-slate-200/60 shadow-inner">
-            <div className="flex items-center px-3 gap-2">
-              <Calendar className="h-4 w-4 text-blue-500" strokeWidth={2.5} />
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Period</span>
-            </div>
-            
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="bg-white border border-slate-200/80 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-all cursor-pointer shadow-sm"
-            />
-            
-            <div className="px-2 text-slate-400 font-medium text-xs">
-              →
-            </div>
-            
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="bg-white border border-slate-200/80 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-all cursor-pointer shadow-sm mr-1"
-            />
-          </div>
-
-          <div className="w-px h-8 bg-slate-200 mx-1"></div>
+          {/* Settings Button */}
+          <button
+            onClick={() => {
+              setWizardStep(1);
+              setIsSettingsModalOpen(true);
+            }}
+            title="Settings"
+            className="flex items-center gap-2 rounded-xl border-2 border-slate-300 hover:border-slate-400 text-slate-700 hover:text-slate-900 px-4 py-2 text-xs font-bold hover:bg-slate-50 active:scale-95 transition-all duration-200 cursor-pointer"
+          >
+            <Settings className="h-4 w-4" /> 
+            <span>ตั้งค่าหลัก</span>
+          </button>
 
           {/* Auto Email Schedule Button */}
           <button
-            onClick={() => setIsEmailModalOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white px-4 py-2.5 text-xs font-bold shadow-md hover:shadow-slate-800/30 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer"
+            onClick={() => {
+              setWizardStep(2);
+              setIsSettingsModalOpen(true);
+            }}
+            className="flex items-center gap-2 rounded-xl border-2 border-slate-300 hover:border-slate-400 text-slate-700 hover:text-slate-900 px-4 py-2 text-xs font-bold hover:bg-slate-50 active:scale-95 transition-all duration-200 cursor-pointer"
           >
-            <Mail className="h-4 w-4 text-blue-400" /> 
+            <Mail className="h-4 w-4" /> 
             <span>Auto Email</span>
           </button>
 
-          {/* Print Button */}
+          {/* Print Button - Pink/Magenta */}
           <button
             onClick={handlePrint}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-pink-600 to-pink-600 hover:from-pink-700 hover:to-pink-700 px-6 py-2 text-xs font-bold text-white shadow-lg shadow-pink-500/30 hover:shadow-pink-500/45 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer"
           >
             <Printer className="h-4 w-4" /> 
-            <span>Save PDF / Print</span>
+            <span>บันทึก PDF / พิมพ์</span>
           </button>
         </div>
       </div>
 
-      {/* Email Schedule Modal */}
-      <EmailScheduleModal 
-        isOpen={isEmailModalOpen}
-        onClose={() => setIsEmailModalOpen(false)}
-        companyName={data.accountInfo?.CompanyName || 'Atera Client'}
-        dateRangeDisplay={dateRangeDisplay}
+      {/* Settings Wizard Modal */}
+      <SettingsWizardModal 
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        initialStartDate={startDate}
+        initialEndDate={endDate}
+        initialCompanyName={companyName}
+        initialReportTitle={reportTitle}
+        initialReportSubtitle={reportSubtitle}
+        initialStep={wizardStep}
+        onSave={(config) => {
+          setStartDate(config.startDate);
+          setEndDate(config.endDate);
+          setCompanyName(config.companyName);
+          setReportTitle(config.reportTitle);
+          setReportSubtitle(config.reportSubtitle);
+        }}
       />
 
       {/* PAGE 1: COVER PAGE */}
@@ -205,6 +257,8 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         totalAlerts={totalAlerts}
         currentDate={currentDate}
         reportPeriod={reportPeriod}
+        reportTitle={reportTitle}
+        companyName={companyName}
       />
 
       {/* PAGE 2: SUMMARY & CUSTOMERS */}

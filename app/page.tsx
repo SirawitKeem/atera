@@ -3,16 +3,15 @@ import ReportView from '@/components/ReportView';
 import { AteraClient } from '@/lib/atera-client';
 
 export default async function Page() {
-  let customersData: any[] = [];
-  let agentsData: any[] = [];
-  let ticketsData: any[] = [];
-  let alertsData: any[] = [];
-  let contractsData: any[] = [];
-  let workhoursData: any[] = [];
-  let contactsData: any[] = [];
-  let patchData: any[] = [];
-  let accountInfo: any = null;
-  let isMock = false;
+  let customersData: Record<string, unknown>[] = [];
+  let agentsData: Record<string, unknown>[] = [];
+  let ticketsData: Record<string, unknown>[] = [];
+  let alertsData: Record<string, unknown>[] = [];
+  let contractsData: Record<string, unknown>[] = [];
+  let workhoursData: Record<string, unknown>[] = [];
+  let contactsData: Record<string, unknown>[] = [];
+  let patchData: Record<string, unknown>[] = [];
+  let accountInfo: Record<string, unknown> | null = null;
   let errorMsg: string | null = null;
 
   try {
@@ -39,26 +38,27 @@ export default async function Page() {
       const val = agentsRes.value;
       agentsData = val.items || (Array.isArray(val) ? val : []);
       
-      const patchPromises = agentsData.map(async (agent: any) => {
+      const patchPromises = agentsData.map(async (agent: Record<string, unknown>) => {
         if (!agent.DeviceGuid) return null;
         
+        const deviceGuid = String(agent.DeviceGuid);
         const [installedRes, availableRes] = await Promise.allSettled([
-          AteraClient.getInstalledPatches(agent.DeviceGuid),
-          AteraClient.getAvailablePatches(agent.DeviceGuid)
+          AteraClient.getInstalledPatches(deviceGuid),
+          AteraClient.getAvailablePatches(deviceGuid)
         ]);
 
         return {
-          agentName: agent.MachineName || agent.AgentName || 'Agent',
-          deviceGuid: agent.DeviceGuid,
-          os: agent.OS || 'Unknown OS',
-          deviceType: agent.DeviceType || 'Workstation',
+          agentName: String(agent.MachineName || agent.AgentName || 'Agent'),
+          deviceGuid: deviceGuid,
+          os: String(agent.OS || 'Unknown OS'),
+          deviceType: String(agent.DeviceType || 'Workstation'),
           installedPatches: installedRes.status === 'fulfilled' ? (installedRes.value?.installedUpdates || installedRes.value || []) : [],
           availablePatches: availableRes.status === 'fulfilled' ? (availableRes.value?.availableUpdates || availableRes.value || []) : []
         };
       });
       
       const patchResults = await Promise.all(patchPromises);
-      patchData = patchResults.filter(Boolean);
+      patchData = patchResults.filter(p => p !== null) as Record<string, unknown>[];
     }
 
     // Extract Tickets
@@ -96,8 +96,9 @@ export default async function Page() {
       accountInfo = accountRes.value;
     }
 
-  } catch (error: any) {
-    errorMsg = error?.message || "Error connecting to Atera API";
+  } catch (error: unknown) {
+    const err = error as Record<string, unknown> | Error;
+    errorMsg = (err instanceof Error) ? err.message : (typeof err === 'object' && err && 'message' in err ? String(err.message) : "Error connecting to Atera API");
   }
 
   const reportData = {

@@ -297,7 +297,7 @@ export default function PatchesPage({
                     <div key={idx} className="flex items-center justify-between p-1.5 rounded-md bg-slate-50 border border-slate-100">
                       <div className="flex flex-col overflow-hidden mr-2">
                         <span className="text-[8.5px] font-bold text-slate-700 truncate" title={patch.name}>
-                          {patch.kbId && patch.kbId !== 'undefined' ? `[${patch.kbId}] ` : ''}{patch.name}
+                          {patch.kbId && patch.kbId !== 'undefined' ? `[${patch.kbId}] ${patch.name}` : patch.name}
                         </span>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[7px] font-medium text-slate-500">{patch.agentName}</span>
