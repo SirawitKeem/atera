@@ -15,11 +15,28 @@ export default async function Page() {
   let errorMsg: string | null = null;
 
   try {
-    // Parallel data fetches from Atera API
-    const [customersRes, agentsRes, ticketsRes, alertsRes, contractsRes, workhoursRes, contactsRes, accountRes] = await Promise.allSettled([
+    // Parallel data fetches from Atera API (fetching all ticket statuses)
+    const [
+      customersRes, 
+      agentsRes, 
+      ticketsRes, 
+      openTicketsRes, 
+      pendingTicketsRes, 
+      closedTicketsRes, 
+      resolvedTicketsRes, 
+      alertsRes, 
+      contractsRes, 
+      workhoursRes, 
+      contactsRes, 
+      accountRes
+    ] = await Promise.allSettled([
       AteraClient.getCustomers({ page: '1', itemsInPage: '50' }),
       AteraClient.getAgents({ page: '1', itemsInPage: '50' }),
-      AteraClient.getTickets({ page: '1', itemsInPage: '50' }),
+      AteraClient.getTickets({ page: '1', itemsInPage: '100' }),
+      AteraClient.getTickets({ page: '1', itemsInPage: '100', ticketStatus: 'Open' }),
+      AteraClient.getTickets({ page: '1', itemsInPage: '100', ticketStatus: 'Pending' }),
+      AteraClient.getTickets({ page: '1', itemsInPage: '100', ticketStatus: 'Closed' }),
+      AteraClient.getTickets({ page: '1', itemsInPage: '100', ticketStatus: 'Resolved' }),
       AteraClient.getAlerts({ page: '1', itemsInPage: '50' }),
       AteraClient.getContracts({ page: '1', itemsInPage: '55' }),
       AteraClient.getWorkhours({ page: '1', itemsInPage: '50' }),
@@ -61,11 +78,37 @@ export default async function Page() {
       patchData = patchResults.filter(p => p !== null) as Record<string, unknown>[];
     }
 
-    // Extract Tickets
-    if (ticketsRes.status === 'fulfilled') {
+    // Extract & Combine Tickets (Default, Open, Pending, Closed, and Resolved)
+    let rawTicketsList: Record<string, unknown>[] = [];
+    if (ticketsRes.status === 'fulfilled' && ticketsRes.value) {
       const val = ticketsRes.value;
-      ticketsData = val.items || (Array.isArray(val) ? val : []);
+      rawTicketsList = rawTicketsList.concat(val.items || (Array.isArray(val) ? val : []));
     }
+    if (openTicketsRes.status === 'fulfilled' && openTicketsRes.value) {
+      const val = openTicketsRes.value;
+      rawTicketsList = rawTicketsList.concat(val.items || (Array.isArray(val) ? val : []));
+    }
+    if (pendingTicketsRes.status === 'fulfilled' && pendingTicketsRes.value) {
+      const val = pendingTicketsRes.value;
+      rawTicketsList = rawTicketsList.concat(val.items || (Array.isArray(val) ? val : []));
+    }
+    if (closedTicketsRes.status === 'fulfilled' && closedTicketsRes.value) {
+      const val = closedTicketsRes.value;
+      rawTicketsList = rawTicketsList.concat(val.items || (Array.isArray(val) ? val : []));
+    }
+    if (resolvedTicketsRes.status === 'fulfilled' && resolvedTicketsRes.value) {
+      const val = resolvedTicketsRes.value;
+      rawTicketsList = rawTicketsList.concat(val.items || (Array.isArray(val) ? val : []));
+    }
+
+    const ticketMap = new Map();
+    rawTicketsList.forEach((ticket: any) => {
+      const id = ticket.TicketID || ticket.ticketId || ticket.id;
+      if (id) {
+        ticketMap.set(id, ticket);
+      }
+    });
+    ticketsData = Array.from(ticketMap.values());
 
     // Extract Alerts
     if (alertsRes.status === 'fulfilled') {

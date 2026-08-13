@@ -54,6 +54,16 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
   // Selected step for Settings Wizard
   const [wizardStep, setWizardStep] = useState(1);
 
+  // Active language state ('th' or 'en')
+  const [language, setLanguage] = useState<'th' | 'en'>('th');
+
+  // Scroll visibility for the floating header bar
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Mounting state to prevent Next.js hydration flash
+  const [hasMounted, setHasMounted] = useState(false);
+
   // Load saved report settings on mount
   useEffect(() => {
     const savedConfig = localStorage.getItem('atera_unified_report_settings');
@@ -65,11 +75,32 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         if (parsed.companyName) setCompanyName(parsed.companyName);
         if (parsed.startDate) setStartDate(parsed.startDate);
         if (parsed.endDate) setEndDate(parsed.endDate);
+        if (parsed.displayLanguage && (parsed.displayLanguage === 'th' || parsed.displayLanguage === 'en')) {
+          setLanguage(parsed.displayLanguage);
+        }
       } catch (e) {
         console.error('Failed to load saved report settings', e);
       }
     }
-  }, [data.accountInfo?.CompanyName]);
+    setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasMounted) return;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setShowHeader(false);
+      } else {
+        setShowHeader(true);
+      }
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [hasMounted, lastScrollY]);
 
   const reportPeriod = useMemo(() => ({ start: startDate, end: endDate }), [startDate, endDate]);
 
@@ -156,11 +187,22 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
   }).length;
   const warningAlerts = totalAlerts - criticalAlerts;
 
+  if (!hasMounted) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center text-slate-600 font-sans">
+        <div className="h-8 w-8 border-4 border-slate-300 border-t-[#E20074] rounded-full animate-spin mb-3"></div>
+        <p className="text-xs font-bold tracking-wide">กำลังเตรียมข้อมูลรายงาน...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="a4-container min-h-screen">
       
-      {/* Floating Action Bar (Hidden in Print) */}
-      <div className="no-print sticky top-4 z-50 bg-white/90 backdrop-blur-xl text-slate-800 px-6 py-3.5 rounded-2xl border border-slate-200/60 shadow-[0_12px_40px_rgba(0,0,0,0.1)] flex items-center justify-between transition-all duration-300" style={{ width: '210mm', marginLeft: 'auto', marginRight: 'auto' }}>
+      {/* Floating Action Bar (Hidden in Print) - Smart Scroll Show/Hide Header */}
+      <div className={`no-print sticky top-4 z-50 bg-white/90 backdrop-blur-xl text-slate-800 px-6 py-3.5 rounded-2xl border border-slate-200/60 shadow-[0_12px_40px_rgba(0,0,0,0.1)] flex items-center justify-between transition-all duration-500 ease-in-out ${
+        showHeader ? 'translate-y-0 opacity-100' : '-translate-y-28 opacity-0 pointer-events-none'
+      }`} style={{ width: '210mm', marginLeft: 'auto', marginRight: 'auto' }}>
         
         {/* Left side: Logo + Status */}
         <div className="flex items-center gap-5">
@@ -182,10 +224,10 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
             </div>
             <div className="flex flex-col">
               <h3 className="font-bold text-sm text-slate-900 tracking-tight">
-                Live API Connected
+                {language === 'th' ? 'เชื่อมต่อ API สำเร็จ' : 'Live API Connected'}
               </h3>
               <p className="text-[10.5px] text-slate-500 font-medium">
-                {errorMsg ? errorMsg : 'เชื่อมต่อและดึงข้อมูลจาก Atera เรียลไทม์'}
+                {errorMsg ? errorMsg : (language === 'th' ? 'เชื่อมต่อและดึงข้อมูลจาก Atera เรียลไทม์' : 'Connected and fetching live data from Atera')}
               </p>
             </div>
           </div>
@@ -193,18 +235,16 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
 
         {/* Right side: Action Buttons */}
         <div className="flex items-center gap-3">
-          
-          {/* Settings Button */}
           <button
             onClick={() => {
               setWizardStep(1);
               setIsSettingsModalOpen(true);
             }}
-            title="Settings"
+            title={language === 'th' ? 'ตั้งค่าหลัก' : 'Settings'}
             className="flex items-center gap-2 rounded-xl border-2 border-slate-300 hover:border-slate-400 text-slate-700 hover:text-slate-900 px-4 py-2 text-xs font-bold hover:bg-slate-50 active:scale-95 transition-all duration-200 cursor-pointer"
           >
             <Settings className="h-4 w-4" /> 
-            <span>ตั้งค่าหลัก</span>
+            <span>{language === 'th' ? 'ตั้งค่าหลัก' : 'Settings'}</span>
           </button>
 
           {/* Auto Email Schedule Button */}
@@ -225,7 +265,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
             className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-pink-600 to-pink-600 hover:from-pink-700 hover:to-pink-700 px-6 py-2 text-xs font-bold text-white shadow-lg shadow-pink-500/30 hover:shadow-pink-500/45 hover:-translate-y-0.5 active:scale-95 transition-all duration-200 cursor-pointer"
           >
             <Printer className="h-4 w-4" /> 
-            <span>บันทึก PDF / พิมพ์</span>
+            <span>{language === 'th' ? 'บันทึก PDF / พิมพ์' : 'Save PDF / Print'}</span>
           </button>
         </div>
       </div>
@@ -239,6 +279,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         initialCompanyName={companyName}
         initialReportTitle={reportTitle}
         initialReportSubtitle={reportSubtitle}
+        initialDisplayLanguage={language}
         initialStep={wizardStep}
         onSave={(config) => {
           setStartDate(config.startDate);
@@ -246,6 +287,9 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
           setCompanyName(config.companyName);
           setReportTitle(config.reportTitle);
           setReportSubtitle(config.reportSubtitle);
+          if (config.displayLanguage) {
+            setLanguage(config.displayLanguage);
+          }
         }}
       />
 
@@ -278,6 +322,8 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         resolvedTickets={resolvedTickets}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
+        lang={language}
+        companyName={companyName}
       />
 
       {/* PAGE 3: INFRASTRUCTURE & CUSTOMER OVERVIEW */}
@@ -289,6 +335,8 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         contacts={contacts}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
+        lang={language}
+        companyName={companyName}
       />
 
       {/* PAGE 4: OS PATCH SUMMARY */}
@@ -299,6 +347,8 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         reportPeriod={reportPeriod}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
+        lang={language}
+        companyName={companyName}
       />
 
       {/* PAGE 5: AVAILABLE OS PATCHES */}
@@ -308,6 +358,8 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         reportPeriod={reportPeriod}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
+        lang={language}
+        companyName={companyName}
       />
 
       {/* PAGE 6: ALERT OVERVIEW */}
@@ -318,6 +370,8 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         warningAlerts={warningAlerts}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
+        lang={language}
+        companyName={companyName}
       />
 
       {/* PAGE 7: TICKET OVERVIEW */}
@@ -330,6 +384,9 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         criticalTickets={criticalTickets}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
+        lang={language}
+        companyName={companyName}
+        agents={agents}
       />
 
       {/* PAGE 8: SECURITY & VULNERABILITY ASSESSMENT */}
@@ -342,6 +399,8 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         patchData={patchData}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
+        lang={language}
+        companyName={companyName}
       />
 
       {/* PAGE 9: DEVICE AVAILABILITY & HEALTH */}
@@ -350,6 +409,8 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         agents={agents}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
+        lang={language}
+        companyName={companyName}
       />
 
     </div>

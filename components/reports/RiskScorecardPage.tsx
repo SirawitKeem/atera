@@ -11,6 +11,7 @@ import {
   Server
 } from 'lucide-react';
 import ReportHeader from './ReportHeader';
+import { translations } from '@/lib/translations';
 
 interface RiskScorecardPageProps {
   pageNumber: number;
@@ -21,6 +22,8 @@ interface RiskScorecardPageProps {
   patchData?: any[];
   totalPages?: number;
   dateRangeDisplay?: string;
+  lang?: string;
+  companyName?: string;
 }
 
 export default function RiskScorecardPage({
@@ -31,8 +34,11 @@ export default function RiskScorecardPage({
   tickets,
   patchData = [],
   totalPages = 9,
-  dateRangeDisplay
+  dateRangeDisplay,
+  lang = 'th',
+  companyName = 'Atera Client'
 }: RiskScorecardPageProps) {
+  const t = translations[lang as 'th' | 'en'] || translations.th;
 
   // Process customer risk metrics
   const clientRiskScores = customers.map((c, idx) => {
@@ -97,8 +103,9 @@ export default function RiskScorecardPage({
     >
       {/* Report Header */}
       <ReportHeader 
-        title="Customer Risk Scorecard" 
-        subtitle={`Security Audits & Risk Assessment Metrics | Reporting Period: ${dateRangeDisplay || 'N/A'}`} 
+        title={t.riskTitle} 
+        subtitle={`${t.riskSubtitle} | Client: ${companyName} | Period: ${dateRangeDisplay || 'N/A'}`} 
+        lang={lang}
         dateRangeDisplay={dateRangeDisplay}
       />
 
@@ -107,18 +114,18 @@ export default function RiskScorecardPage({
         {/* SECTION 3: RISK SCORECARD TABLE */}
         <div className="space-y-1.5 flex-1 flex flex-col justify-end">
           <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 select-none">
-            <Server className="h-3.5 w-3.5 text-blue-500" /> 3. ตารางประเมินผลความมั่นคงปลอดภัยลูกค้ารายละเอียด (Client Security Scorecard)
+            <Server className="h-3.5 w-3.5 text-blue-500" /> {lang === 'th' ? '3. ตารางประเมินผลความมั่นคงปลอดภัยลูกค้ารายละเอียด (Client Security Scorecard)' : '3. CLIENT SECURITY SCORECARD'}
           </h3>
           <div className="border border-slate-100 rounded-lg overflow-hidden bg-white/70 backdrop-blur-xs shadow-xs flex-1">
             <table className="min-w-full divide-y divide-slate-100 text-[10px] text-left">
               <thead className="bg-[#0f4c81] text-white font-bold uppercase tracking-wider text-[7.5px]">
                 <tr>
-                  <th className="px-4 py-2 w-[30%]">CUSTOMER</th>
-                  <th className="px-4 py-2 text-center w-[15%]">RISK SCORE</th>
-                  <th className="px-4 py-2 text-center w-[15%]">RISK LEVEL</th>
-                  <th className="px-4 py-2 text-center w-[13%]">CRITICAL ALERTS</th>
-                  <th className="px-4 py-2 text-center w-[13%]">MISSING PATCHES</th>
-                  <th className="px-4 py-2 text-right w-[14%]">OPEN TICKETS</th>
+                  <th className="px-4 py-2 w-[30%]">{lang === 'th' ? 'ลูกค้า' : 'CUSTOMER'}</th>
+                  <th className="px-4 py-2 text-center w-[15%]">{lang === 'th' ? 'คะแนนความเสี่ยง' : 'RISK SCORE'}</th>
+                  <th className="px-4 py-2 text-center w-[15%]">{lang === 'th' ? 'ระดับความเสี่ยง' : 'RISK LEVEL'}</th>
+                  <th className="px-4 py-2 text-center w-[13%]">{lang === 'th' ? 'แจ้งเตือนวิกฤต' : 'CRITICAL ALERTS'}</th>
+                  <th className="px-4 py-2 text-center w-[13%]">{lang === 'th' ? 'ค้างติดตั้งแพตช์' : 'MISSING PATCHES'}</th>
+                  <th className="px-4 py-2 text-right w-[14%]">{lang === 'th' ? 'ตั๋วงานที่ค้าง' : 'OPEN TICKETS'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-semibold bg-white/50">
@@ -139,12 +146,20 @@ export default function RiskScorecardPage({
                       <td className={`px-4 py-2 text-center font-mono font-black ${scoreColor}`}>{c.riskScore}%</td>
                       <td className="px-4 py-2 text-center">
                         <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[8.5px] font-extrabold border uppercase ${statusBadge}`}>
-                          {c.status}
+                          {c.status === 'Critical Risk' ? (lang === 'th' ? 'วิกฤต' : 'Critical Risk') : 
+                           c.status === 'Medium Risk' ? (lang === 'th' ? 'ปานกลาง' : 'Medium Risk') : 
+                           (lang === 'th' ? 'ต่ำ' : 'Low Risk')}
                         </span>
                       </td>
-                      <td className="px-4 py-2 text-center text-slate-500 font-medium">{c.custCriticalAlerts} Alerts</td>
-                      <td className="px-4 py-2 text-center text-slate-500 font-medium">{c.custMissingPatches} Patches</td>
-                      <td className="px-4 py-2 text-right text-slate-500 font-medium">{c.custOpenTickets} Tickets</td>
+                      <td className="px-4 py-2 text-center text-slate-500 font-medium">
+                        {lang === 'th' ? `${c.custCriticalAlerts} รายการ` : `${c.custCriticalAlerts} Alerts`}
+                      </td>
+                      <td className="px-4 py-2 text-center text-slate-500 font-medium">
+                        {lang === 'th' ? `${c.custMissingPatches} แพตช์` : `${c.custMissingPatches} Patches`}
+                      </td>
+                      <td className="px-4 py-2 text-right text-slate-500 font-medium">
+                        {lang === 'th' ? `${c.custOpenTickets} ตั๋ว` : `${c.custOpenTickets} Tickets`}
+                      </td>
                     </tr>
                   );
                 })}
@@ -158,7 +173,9 @@ export default function RiskScorecardPage({
       {/* Page Footer */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
-        <span>หน้า {pageNumber} จาก {totalPages}</span>
+        <span>
+          {lang === 'th' ? `หน้า ${pageNumber} จาก ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}
+        </span>
       </div>
     </div>
   );

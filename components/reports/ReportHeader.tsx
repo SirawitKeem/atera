@@ -7,9 +7,10 @@ interface ReportHeaderProps {
   title: string;
   subtitle: string;
   dateRangeDisplay?: string;
+  lang?: string;
 }
 
-export default function ReportHeader({ title, subtitle, dateRangeDisplay }: ReportHeaderProps) {
+export default function ReportHeader({ title, subtitle, dateRangeDisplay, lang = 'th' }: ReportHeaderProps) {
   // Generate Thai dynamic dates
   const today = new Date();
   const thaiMonths = [
@@ -57,13 +58,13 @@ export default function ReportHeader({ title, subtitle, dateRangeDisplay }: Repo
       <div className="flex flex-col items-end text-right">
         {/* Monthly Report pill */}
         <span className="inline-flex text-[9px] font-extrabold text-[#E20074] bg-[#FFEAF2] px-2.5 py-1 rounded-full uppercase tracking-wider">
-          Monthly Report
+          {lang === 'th' ? 'รายงานประจำเดือน' : 'Monthly Report'}
         </span>
 
         {/* Date block */}
-        <div className="border border-slate-200/80 rounded-lg py-1.5 px-3 flex items-center gap-2 bg-white/60 shadow-xs mt-2">
-          <Calendar className="w-4 h-4 text-slate-600 flex-shrink-0" strokeWidth={2.2} />
-          <span className="text-slate-800 font-bold text-xs">
+        <div className="border border-slate-200/80 rounded-lg py-1 px-2.5 flex items-center gap-1.5 bg-white/60 shadow-xs mt-2 max-w-[220px] justify-center">
+          <Calendar className="w-3.5 h-3.5 text-slate-500 flex-shrink-0" strokeWidth={2.2} />
+          <span className="text-slate-800 font-semibold text-[10px] whitespace-nowrap">
             {displayDate}
           </span>
         </div>
