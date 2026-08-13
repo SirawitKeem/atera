@@ -20,6 +20,7 @@ interface DevicesPageProps {
   customers: any[];
   agents: any[];
   contracts: any[];
+  dateRangeDisplay?: string;
 }
 
 export default function DevicesPage({
@@ -27,6 +28,8 @@ export default function DevicesPage({
   customers,
   agents,
   contracts
+,
+  dateRangeDisplay
 }: DevicesPageProps) {
 
   const totalCustomers = customers.length;
@@ -122,6 +125,7 @@ export default function DevicesPage({
       <ReportHeader 
         title="Infrastructure & Customer Overview" 
         subtitle="Monthly MSP Overview | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        dateRangeDisplay={dateRangeDisplay}
       />
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">

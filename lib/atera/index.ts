@@ -12,6 +12,7 @@ import { knowledgebaseApi } from './knowledgebase';
 import { rateApi } from './rate';
 import { ticketApi } from './ticket';
 import { workhourApi } from './workhour';
+import { patchApi } from './patch';
 
 export const AteraClient = {
   ...accountApi,
@@ -27,5 +28,6 @@ export const AteraClient = {
   ...knowledgebaseApi,
   ...rateApi,
   ...ticketApi,
-  ...workhourApi
+  ...workhourApi,
+  ...patchApi
 };

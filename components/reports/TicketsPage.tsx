@@ -20,6 +20,7 @@ interface TicketsPageProps {
   openTickets: number;
   resolvedTickets: number;
   criticalTickets: number;
+  dateRangeDisplay?: string;
 }
 
 export default function TicketsPage({
@@ -29,6 +30,8 @@ export default function TicketsPage({
   openTickets,
   resolvedTickets,
   criticalTickets
+,
+  dateRangeDisplay
 }: TicketsPageProps) {
 
   // Ticket Priority counters
@@ -62,6 +65,7 @@ export default function TicketsPage({
       <ReportHeader 
         title="Ticket Overview" 
         subtitle="Helpdesk Ticket Volume & Support Performance | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        dateRangeDisplay={dateRangeDisplay}
       />
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">

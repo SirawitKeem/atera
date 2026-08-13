@@ -8,18 +8,41 @@ import {
   Server,
   Laptop,
   Cpu,
-  Monitor
+  Monitor,
+  CheckCircle
 } from 'lucide-react';
 import ReportHeader from './ReportHeader';
+
+interface Patch {
+  name: string;
+  class: string;
+  kbId: string;
+  installDate?: string;
+}
+
+interface AgentData {
+  agentName: string;
+  deviceGuid: string;
+  os: string;
+  deviceType: string;
+  installedPatches?: Patch[];
+}
 
 interface PatchesPageProps {
   pageNumber: number;
   agents: any[];
+  patchData: AgentData[];
+  reportPeriod: { start: string; end: string };
+  dateRangeDisplay?: string;
 }
 
 export default function PatchesPage({
   pageNumber,
-  agents
+  agents,
+  patchData,
+  reportPeriod
+,
+  dateRangeDisplay
 }: PatchesPageProps) {
 
   const totalDevices = agents.length;
@@ -42,20 +65,64 @@ export default function PatchesPage({
     return os.includes('linux') || os.includes('ubuntu') || os.includes('debian');
   }).length;
 
-  const macCount = Math.max(0, totalDevices - (winPcCount + winServerCount + linuxCount));
+  // Date filter helper
+  const isInRange = (dateStr?: string) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const start = new Date(reportPeriod.start + 'T00:00:00Z');
+    const end = new Date(reportPeriod.end + 'T23:59:59Z');
+    return d >= start && d <= end;
+  };
 
-  // Dynamically allocate available patches based on Atera console screenshot (Total = 36)
-  // Windows PC: Green ring (100% compliant) -> 0 missing patches
-  const winPcPatches = 0;
-  // Windows Server: Yellow ring -> 32 missing patches (8 per server machine)
-  const winServerPatches = winServerCount > 0 ? 32 : 0;
-  // Linux: Orange ring (0% compliant) -> 4 missing patches
-  const linuxPatches = linuxCount > 0 ? 4 : 0;
-  // macOS: 0 agents -> 0 missing patches
-  const macPatches = 0;
+  // Process Installed Patches Data
+  let totalInstalled = 0;
+  let securityInstalled = 0;
+  let definitionInstalled = 0;
+  let devicesUpdated = 0;
 
-  const totalAvailablePatches = winPcPatches + winServerPatches + linuxPatches + macPatches; // Matches 36
-  const devicesMissingPatches = (winServerCount > 0 ? winServerCount : 0) + (linuxCount > 0 ? linuxCount : 0); // Matches 5
+  const allInstalledPatches: (Patch & { agentName: string })[] = [];
+  
+  // OS Patches Installed count
+  let winPcPatches = 0;
+  let winServerPatches = 0;
+  let linuxPatches = 0;
+
+  (patchData || []).forEach(agent => {
+    if (agent.installedPatches && agent.installedPatches.length > 0) {
+      const filteredPatches = agent.installedPatches.filter(p => isInRange(p.installDate));
+      
+      if (filteredPatches.length > 0) {
+        devicesUpdated++;
+        totalInstalled += filteredPatches.length;
+        
+        filteredPatches.forEach(patch => {
+          if (patch.class === 'Security Updates') securityInstalled++;
+          if (patch.class === 'Definition Updates') definitionInstalled++;
+          
+          allInstalledPatches.push({ ...patch, agentName: agent.agentName });
+
+          const os = (agent.os || '').toLowerCase();
+          const type = (agent.deviceType || '').toLowerCase();
+          
+          if (os.includes('win') && !os.includes('server') && !type.includes('server')) {
+            winPcPatches++;
+          } else if (os.includes('server') || type.includes('server')) {
+            winServerPatches++;
+          } else if (os.includes('linux') || os.includes('ubuntu') || os.includes('debian')) {
+            linuxPatches++;
+          }
+        });
+      }
+    }
+  });
+
+  // Sort all installed patches by date descending
+  allInstalledPatches.sort((a, b) => {
+    return new Date(b.installDate || '').getTime() - new Date(a.installDate || '').getTime();
+  });
+
+  // Take top 5 for the summary table
+  const recentPatches = allInstalledPatches.slice(0, 5);
 
   // Date Formatting helper for reboot time
   const formatRebootTime = (dateStr: string) => {
@@ -70,6 +137,12 @@ export default function PatchesPage({
     } catch {
       return dateStr;
     }
+  };
+
+  const formatDateShort = (dateStr?: string) => {
+    if (!dateStr) return 'N/A';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
   // OS Icon Helper
@@ -92,6 +165,13 @@ export default function PatchesPage({
     return <Terminal className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />;
   };
 
+  // Format the report period for the header
+  const formatDateDisplay = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+  const headerSubtitle = `Operating Systems and Build Version Compliance Audit | Reporting Period: ${formatDateDisplay(reportPeriod.start)} - ${formatDateDisplay(reportPeriod.end)}`;
+
   return (
     <div 
       className="a4-page flex flex-col justify-between"
@@ -104,120 +184,143 @@ export default function PatchesPage({
     >
       {/* Report Header */}
       <ReportHeader 
-        title="Patch & System Inventory" 
-        subtitle="Operating Systems and Build Version Compliance Audit | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        title="OS Patches Summary" 
+        subtitle={headerSubtitle} 
+        dateRangeDisplay={dateRangeDisplay}
       />
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">
         
         {/* SECTION 1: SYSTEM KPI CARDS */}
         <div className="grid grid-cols-4 gap-3 select-none">
-          {/* Total Devices */}
+          {/* Total Installed Patches */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Total Devices</span>
-              <Monitor className="h-3.5 w-3.5 text-blue-500" />
+              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Installed Patches</span>
+              <CheckCircle className="h-3.5 w-3.5 text-blue-500" />
             </div>
             <div>
-              <h4 className="text-base font-black text-slate-800 leading-none">{totalDevices} Agents</h4>
-              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Total RMM Audited</p>
+              <h4 className="text-base font-black text-slate-800 leading-none">{totalInstalled} Patches</h4>
+              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Successfully Installed</p>
             </div>
           </div>
 
-          {/* OS Patches Available */}
+          {/* Security Updates */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">OS Patches Available</span>
-              <Cpu className="h-3.5 w-3.5 text-indigo-500" />
+              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Security Updates</span>
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
             </div>
             <div>
-              <h4 className="text-base font-black text-indigo-600 leading-none">{totalAvailablePatches} Patches</h4>
-              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Total Available Updates</p>
+              <h4 className="text-base font-black text-emerald-600 leading-none">{securityInstalled} Updates</h4>
+              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Critical & Security</p>
             </div>
           </div>
 
-          {/* Devices Missing Patches */}
+          {/* Definition Updates */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Devices Missing Patches</span>
-              <Server className="h-3.5 w-3.5 text-emerald-500" />
+              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Definition Updates</span>
+              <Activity className="h-3.5 w-3.5 text-indigo-500" />
             </div>
             <div>
-              <h4 className="text-base font-black text-emerald-600 leading-none">{devicesMissingPatches} Nodes</h4>
-              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Updates Required</p>
+              <h4 className="text-base font-black text-indigo-600 leading-none">{definitionInstalled} Updates</h4>
+              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Antivirus / Malware</p>
             </div>
           </div>
 
-          {/* Reboot Pending */}
+          {/* Devices Updated */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Reboot Pending</span>
-              <Laptop className="h-3.5 w-3.5 text-amber-500" />
+              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block">Devices Updated</span>
+              <Monitor className="h-3.5 w-3.5 text-amber-500" />
             </div>
             <div>
-              <h4 className="text-base font-black text-amber-600 leading-none">0 Nodes</h4>
-              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Restart Required</p>
+              <h4 className="text-base font-black text-amber-600 leading-none">{devicesUpdated} Nodes</h4>
+              <p className="text-[6.5px] text-slate-400 font-bold uppercase mt-1">Received Updates</p>
             </div>
           </div>
         </div>
 
-        {/* SECTION 2: CHARTS SIDE-BY-SIDE */}
-        <div className="grid grid-cols-2 gap-4 h-[190px] select-none">
+        {/* SECTION 2: CHARTS & RECENT PATCHES */}
+        <div className="grid grid-cols-5 gap-4 h-[190px] select-none">
           
-          {/* Available Patches by OS */}
-          <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-xs flex flex-col justify-between h-[190px]">
+          {/* Installed Patches by OS */}
+          <div className="col-span-2 bg-white border border-slate-100 rounded-xl p-4 shadow-xs flex flex-col justify-between h-[190px]">
             <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-              <Activity className="h-4 w-4 text-blue-500" /> 1. จำนวนแพทช์ที่อัปเดตได้แยกตาม OS (Available Patches by Operating System)
+              <Activity className="h-4 w-4 text-blue-500" /> 1. แพทช์ที่ติดตั้งแล้วแยกตาม OS
             </h4>
             <div className="space-y-3 flex-1 flex flex-col justify-center">
               {/* Windows PC */}
               <div className="space-y-1">
                 <div className="flex justify-between text-[8.5px] font-bold text-slate-600 leading-none">
-                  <span>Windows Workstation PC ({winPcCount} Devices)</span>
-                  <span className="text-emerald-600">{winPcPatches} Patches Available (100% Compliant)</span>
+                  <span>Windows Workstation ({winPcCount})</span>
+                  <span className="text-blue-600">{winPcPatches} Patches</span>
                 </div>
                 <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                  <div className="bg-emerald-500 h-full rounded-full" style={{ width: '0%' }}></div>
+                  <div className="bg-blue-500 h-full rounded-full transition-all" style={{ width: totalInstalled > 0 ? `${(winPcPatches / totalInstalled) * 100}%` : '0%' }}></div>
                 </div>
               </div>
               {/* Windows Server */}
               <div className="space-y-1">
                 <div className="flex justify-between text-[8.5px] font-bold text-slate-600 leading-none">
-                  <span>Windows Server ({winServerCount} Devices)</span>
-                  <span className="text-amber-600">{winServerPatches} Patches Available (50% Compliant)</span>
+                  <span>Windows Server ({winServerCount})</span>
+                  <span className="text-emerald-600">{winServerPatches} Patches</span>
                 </div>
                 <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                  <div className="bg-amber-500 h-full rounded-full" style={{ width: '89%' }}></div>
+                  <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: totalInstalled > 0 ? `${(winServerPatches / totalInstalled) * 100}%` : '0%' }}></div>
                 </div>
               </div>
               {/* Linux */}
               <div className="space-y-1">
                 <div className="flex justify-between text-[8.5px] font-bold text-slate-600 leading-none">
-                  <span>Linux Systems ({linuxCount} Devices)</span>
-                  <span className="text-rose-600">{linuxPatches} Patches Available (0% Compliant)</span>
+                  <span>Linux Systems ({linuxCount})</span>
+                  <span className="text-indigo-600">{linuxPatches} Patches</span>
                 </div>
                 <div className="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
-                  <div className="bg-rose-500 h-full rounded-full" style={{ width: '11%' }}></div>
+                  <div className="bg-indigo-500 h-full rounded-full transition-all" style={{ width: totalInstalled > 0 ? `${(linuxPatches / totalInstalled) * 100}%` : '0%' }}></div>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* IT Audit Status Note */}
-          <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-xs flex flex-col justify-between h-[190px]">
+          {/* Recent Patches List */}
+          <div className="col-span-3 bg-white border border-slate-100 rounded-xl p-4 shadow-xs flex flex-col justify-between h-[190px]">
             <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-              <ShieldCheck className="h-4 w-4 text-emerald-500" /> 2. การควบคุมความปลอดภัยระบบ (System Security Policy)
+              <CheckCircle className="h-4 w-4 text-emerald-500" /> 2. รายการแพทช์ที่ติดตั้งล่าสุด (Top Recent Installs)
             </h4>
-            <div className="flex-1 flex flex-col justify-center space-y-2.5 text-[9px] text-slate-500 font-medium leading-relaxed">
-              <p>
-                ✓ ระบบทำการตรวจจับหมายเลข <strong>OS Build</strong> และ <strong>OS Version</strong> ของทุกเครื่องที่เชื่อมต่อกับเอเจนต์ RMM โดยอัตโนมัติจาก API
-              </p>
-              <p>
-                ✓ มีการบันทึกประวัติการบูตระบบล่าสุด (Last Reboot Time) ของแต่ละอุปกรณ์ เพื่อติดตามว่าเครื่องใดไม่มีการรีบูตเพื่อรับอัปเดตความปลอดภัยเป็นระยะเวลานาน
-              </p>
-              <p className="text-[8px] bg-slate-50 border border-slate-100 p-2 rounded-lg text-slate-400">
-                หมายเหตุ: ข้อมูล Patch ในหน้าคอนโซล Atera เป็นส่วนการประมวลผลภายใน แผงรายงานนี้จึงมุ่งดึงข้อมูลคุณสมบัติระบบปฏิบัติการจริงจาก Atera API v3 เพื่อประสิทธิภาพความถูกต้องสูงสุด
-              </p>
+            <div className="flex-1 overflow-hidden">
+              {recentPatches.length > 0 ? (
+                <div className="space-y-1.5 mt-1">
+                  {recentPatches.map((patch, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-1.5 rounded-md bg-slate-50 border border-slate-100">
+                      <div className="flex flex-col overflow-hidden mr-2">
+                        <span className="text-[8.5px] font-bold text-slate-700 truncate" title={patch.name}>
+                          {patch.kbId && patch.kbId !== 'undefined' ? `[${patch.kbId}] ` : ''}{patch.name}
+                        </span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[7px] font-medium text-slate-500">{patch.agentName}</span>
+                          <span className={`text-[7px] font-bold px-1.5 py-0.5 rounded-sm ${
+                            patch.class === 'Security Updates' ? 'bg-rose-100 text-rose-700' :
+                            patch.class === 'Definition Updates' ? 'bg-indigo-100 text-indigo-700' :
+                            'bg-blue-100 text-blue-700'
+                          }`}>
+                            {patch.class}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-[8px] font-bold text-slate-400 whitespace-nowrap">
+                        {formatDateShort(patch.installDate)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-slate-400">
+                  <ShieldCheck className="h-6 w-6 mb-1 opacity-20" />
+                  <p className="text-[9px] font-medium">ไม่มีการติดตั้ง Patch ในช่วงเวลาที่เลือก</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -278,7 +381,7 @@ export default function PatchesPage({
       {/* Page Footer */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
-        <span>หน้า {pageNumber} จาก 8</span>
+        <span>หน้า {pageNumber} จาก 9</span>
       </div>
     </div>
   );

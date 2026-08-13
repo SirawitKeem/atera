@@ -17,11 +17,14 @@ import ReportHeader from './ReportHeader';
 interface HealthPageProps {
   pageNumber: number;
   agents: any[];
+  dateRangeDisplay?: string;
 }
 
 export default function HealthPage({
   pageNumber,
   agents
+,
+  dateRangeDisplay
 }: HealthPageProps) {
 
   const totalDevices = agents.length;
@@ -100,6 +103,7 @@ export default function HealthPage({
       <ReportHeader 
         title="Device Availability & Health" 
         subtitle="Monthly Operational Health Audit | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        dateRangeDisplay={dateRangeDisplay}
       />
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">

@@ -8,6 +8,7 @@ interface CoverPageProps {
   totalTickets: number;
   totalAlerts: number;
   currentDate: string;
+  reportPeriod?: { start: string; end: string };
 }
 
 export default function CoverPage({
@@ -15,23 +16,20 @@ export default function CoverPage({
   totalDevices,
   totalTickets,
   totalAlerts,
-  currentDate
+  currentDate,
+  reportPeriod
 }: CoverPageProps) {
-  // Generate a dynamic 30-day period ending today
-  const today = new Date();
-  const prior = new Date();
-  prior.setDate(today.getDate() - 30);
-
-  const formatDate = (date: Date, isStart: boolean) => {
+  const formatDate = (dateStr: string, isStart: boolean) => {
+    const date = new Date(dateStr);
     const d = String(date.getDate()).padStart(2, '0');
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const y = date.getFullYear();
-    const time = isStart ? '07:00' : '06:59';
+    const time = isStart ? '00:00' : '23:59';
     return `${d}/${m}/${y}, ${time}`;
   };
 
-  const startDateStr = formatDate(prior, true);
-  const endDateStr = formatDate(today, false);
+  const startDateStr = reportPeriod ? formatDate(reportPeriod.start, true) : 'N/A';
+  const endDateStr = reportPeriod ? formatDate(reportPeriod.end, false) : 'N/A';
 
   return (
     <div 

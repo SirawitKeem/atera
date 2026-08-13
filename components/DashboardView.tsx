@@ -18,6 +18,7 @@ interface DashboardViewProps {
     alerts: any[];
     contracts: any[];
     workhours: any[];
+    patchData: any[];
   };
   isMock: boolean;
   errorMsg: string | null;

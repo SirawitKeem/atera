@@ -17,6 +17,7 @@ interface AlertsPageProps {
   alerts: any[];
   criticalAlerts: number;
   warningAlerts: number;
+  dateRangeDisplay?: string;
 }
 
 export default function AlertsPage({
@@ -24,6 +25,8 @@ export default function AlertsPage({
   alerts,
   criticalAlerts,
   warningAlerts
+,
+  dateRangeDisplay
 }: AlertsPageProps) {
 
   const totalAlerts = alerts.length;
@@ -82,6 +85,7 @@ export default function AlertsPage({
       <ReportHeader 
         title="Alert Overview" 
         subtitle="Infrastructure Security & Alerts Audit | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        dateRangeDisplay={dateRangeDisplay}
       />
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">

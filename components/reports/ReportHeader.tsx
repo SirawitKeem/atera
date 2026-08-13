@@ -6,9 +6,10 @@ import { Calendar } from 'lucide-react';
 interface ReportHeaderProps {
   title: string;
   subtitle: string;
+  dateRangeDisplay?: string;
 }
 
-export default function ReportHeader({ title, subtitle }: ReportHeaderProps) {
+export default function ReportHeader({ title, subtitle, dateRangeDisplay }: ReportHeaderProps) {
   // Generate Thai dynamic dates
   const today = new Date();
   const thaiMonths = [
@@ -19,10 +20,8 @@ export default function ReportHeader({ title, subtitle }: ReportHeaderProps) {
   const currentMonthThai = thaiMonths[today.getMonth()];
   const currentYearAD = today.getFullYear();
 
-  // Get days in current month
-  const daysInMonth = new Date(currentYearAD, today.getMonth() + 1, 0).getDate();
-
   const currentDateStr = `${today.getDate()} ${currentMonthThai} ${currentYearAD}`;
+  const displayDate = dateRangeDisplay || currentDateStr;
 
   return (
     <div className="w-full flex justify-between items-start border-b border-slate-100 pb-4 mb-6 relative overflow-hidden select-none">
@@ -65,7 +64,7 @@ export default function ReportHeader({ title, subtitle }: ReportHeaderProps) {
         <div className="border border-slate-200/80 rounded-lg py-1.5 px-3 flex items-center gap-2 bg-white/60 shadow-xs mt-2">
           <Calendar className="w-4 h-4 text-slate-600 flex-shrink-0" strokeWidth={2.2} />
           <span className="text-slate-800 font-bold text-xs">
-            {currentDateStr}
+            {displayDate}
           </span>
         </div>
       </div>

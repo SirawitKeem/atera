@@ -40,7 +40,8 @@ const MOCK_DATA = {
     { "WorkhourID": 401, "TechnicianName": "Keem IT", "LoggedHours": 18.5, "Billable": true, "TicketID": 2001, "CustomerName": "Acme Corporation" },
     { "WorkhourID": 402, "TechnicianName": "Keem IT", "LoggedHours": 12.0, "Billable": false, "TicketID": 2002, "CustomerName": "Wayne Enterprises" },
     { "WorkhourID": 403, "TechnicianName": "Somchai Support", "LoggedHours": 8.0, "Billable": true, "TicketID": 2003, "CustomerName": "Stark Industries" }
-  ]
+  ],
+  patchData: []
 };
 
 export default async function Page() {
@@ -50,6 +51,7 @@ export default async function Page() {
   let alertsData: any = [];
   let contractsData: any = [];
   let workhoursData: any = [];
+  let patchData: any = [];
   let isMock = false;
   let errorMsg: string | null = null;
 
@@ -76,6 +78,27 @@ export default async function Page() {
     if (agentsRes.status === 'fulfilled') {
       const val = agentsRes.value;
       agentsData = val.items || (Array.isArray(val) ? val : []);
+      
+      const patchPromises = agentsData.map(async (agent: any) => {
+        if (!agent.DeviceGuid) return null;
+        
+        const [installedRes, availableRes] = await Promise.allSettled([
+          AteraClient.getInstalledPatches(agent.DeviceGuid),
+          AteraClient.getAvailablePatches(agent.DeviceGuid)
+        ]);
+
+        return {
+          agentName: agent.MachineName,
+          deviceGuid: agent.DeviceGuid,
+          os: agent.OS,
+          deviceType: agent.DeviceType,
+          installedPatches: installedRes.status === 'fulfilled' ? (installedRes.value.installedUpdates || []) : [],
+          availablePatches: availableRes.status === 'fulfilled' ? (availableRes.value.availableUpdates || []) : []
+        };
+      });
+      
+      const patchResults = await Promise.all(patchPromises);
+      patchData = patchResults.filter(Boolean);
     } else {
       throw new Error(`Failed to fetch agents: ${agentsRes.reason.message}`);
     }
@@ -118,6 +141,7 @@ export default async function Page() {
       alertsData = MOCK_DATA.alerts;
       contractsData = MOCK_DATA.contracts;
       workhoursData = MOCK_DATA.workhours;
+      patchData = MOCK_DATA.patchData;
     }
 
   } catch (error: any) {
@@ -131,6 +155,7 @@ export default async function Page() {
     alertsData = MOCK_DATA.alerts;
     contractsData = MOCK_DATA.contracts;
     workhoursData = MOCK_DATA.workhours;
+    patchData = MOCK_DATA.patchData;
   }
 
   const reportData = {
@@ -139,7 +164,8 @@ export default async function Page() {
     tickets: ticketsData,
     alerts: alertsData,
     contracts: contractsData,
-    workhours: workhoursData
+    workhours: workhoursData,
+    patchData: patchData
   };
 
   return (

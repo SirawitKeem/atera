@@ -18,6 +18,7 @@ interface RiskScorecardPageProps {
   agents: any[];
   alerts: any[];
   tickets: any[];
+  dateRangeDisplay?: string;
 }
 
 export default function RiskScorecardPage({
@@ -26,6 +27,8 @@ export default function RiskScorecardPage({
   agents,
   alerts,
   tickets
+,
+  dateRangeDisplay
 }: RiskScorecardPageProps) {
 
   // Process customer risk metrics
@@ -87,6 +90,7 @@ export default function RiskScorecardPage({
       <ReportHeader 
         title="Customer Risk Scorecard" 
         subtitle="Security Audits & Risk Assessment Metrics | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        dateRangeDisplay={dateRangeDisplay}
       />
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">

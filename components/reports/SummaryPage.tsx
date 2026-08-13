@@ -27,6 +27,7 @@ interface SummaryPageProps {
   totalDevices: number;
   totalTickets: number;
   resolvedTickets: number;
+  dateRangeDisplay?: string;
 }
 
 export default function SummaryPage({
@@ -43,6 +44,8 @@ export default function SummaryPage({
   totalDevices,
   totalTickets,
   resolvedTickets
+,
+  dateRangeDisplay
 }: SummaryPageProps) {
 
   // Helper to calculate age of a ticket in English
@@ -163,6 +166,7 @@ export default function SummaryPage({
       <ReportHeader 
         title="Executive Summary" 
         subtitle="Monthly Executive Report | Reporting Period: 06 Jul 2026 - 05 Aug 2026" 
+        dateRangeDisplay={dateRangeDisplay}
       />
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-2">
