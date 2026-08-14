@@ -26,12 +26,32 @@ export async function fetchAtera<T>(endpoint: string, params: Record<string, str
   const response = await fetch(url, {
     method: 'GET',
     headers: headers,
-    next: { revalidate: 60 },
+    cache: 'no-store',
   });
 
   if (!response.ok) {
     const errorBody = await response.text();
-    throw new Error(`Atera API Request Failed [${response.status}]: ${response.statusText}. Details: ${errorBody}`);
+    console.error(`[API ERROR] Atera API Request Failed for path "${endpoint}" [${response.status}]: ${response.statusText}. Details: ${errorBody}`);
+    
+    // Return a safe placeholder structure to prevent application crashes
+    if (endpoint.includes('available-patches')) {
+      return { availableUpdates: [] } as unknown as T;
+    }
+    if (endpoint.includes('installed-patches')) {
+      return { installedUpdates: [] } as unknown as T;
+    }
+    if (
+      endpoint.includes('customers') || 
+      endpoint.includes('agents') || 
+      endpoint.includes('tickets') || 
+      endpoint.includes('alerts') || 
+      endpoint.includes('contracts') || 
+      endpoint.includes('workhours') || 
+      endpoint.includes('contacts')
+    ) {
+      return { items: [], page: 1, itemsInPage: 100, totalItemCount: 0, totalPages: 1 } as unknown as T;
+    }
+    return {} as T;
   }
 
   return response.json() as Promise<T>;

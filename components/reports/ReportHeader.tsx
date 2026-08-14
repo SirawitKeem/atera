@@ -25,7 +25,7 @@ export default function ReportHeader({ title, subtitle, dateRangeDisplay, lang =
   const displayDate = dateRangeDisplay || currentDateStr;
 
   return (
-    <div className="w-full flex justify-between items-start border-b border-slate-100 pb-4 mb-6 relative overflow-hidden select-none">
+    <div className="w-full flex justify-between items-start border-b border-slate-100 pb-4 mb-6 relative overflow-hidden ">
       
       {/* Wave Background Lines inside the header (top-right SVG absolute pattern matching screenshot) */}
       <div className="absolute right-0 top-0 w-1/2 h-full opacity-10 pointer-events-none -z-10">

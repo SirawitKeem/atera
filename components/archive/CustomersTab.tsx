@@ -58,7 +58,7 @@ export default function CustomersTab({ customers, agents, tickets, alerts }: Cus
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider select-none">
+              <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider ">
                 <th className="px-6 py-4 w-16 text-center">ID</th>
                 <th className="px-6 py-4">Client Name</th>
                 <th className="px-6 py-4">Primary Email Contact</th>

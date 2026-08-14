@@ -43,7 +43,7 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`bg-white border-r border-slate-200/80 flex flex-col h-screen sticky top-0 left-0 transition-all duration-300 no-print select-none z-40 ${
+      className={`bg-white border-r border-slate-200/80 flex flex-col h-screen sticky top-0 left-0 transition-all duration-300 no-print  z-40 ${
         isCollapsed ? 'w-20' : 'w-64'
       }`}
     >
@@ -97,7 +97,7 @@ export default function Sidebar({
       {/* Profile Card & Collapse footer */}
       <div className="p-4 border-t border-slate-100 space-y-2 bg-slate-50/50">
         <div className={`flex items-center gap-3 ${isCollapsed ? 'justify-center' : 'px-2 py-1.5'}`}>
-          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm flex-shrink-0 select-none">
+          <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm flex-shrink-0 ">
             {userInitials}
           </div>
           {!isCollapsed && (

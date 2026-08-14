@@ -10,7 +10,10 @@ import {
   Cpu,
   Monitor,
   CheckCircle,
-  ShieldAlert
+  ShieldAlert,
+  Info,
+  XCircle,
+  Building2
 } from 'lucide-react';
 import ReportHeader from './ReportHeader';
 import { translations } from '@/lib/translations';
@@ -25,6 +28,7 @@ interface Patch {
 
 interface AgentData {
   agentName: string;
+  customerName?: string;
   deviceGuid: string;
   os: string;
   deviceType: string;
@@ -57,9 +61,19 @@ export default function PatchesPage({
 
   const totalDevices = agents.length;
   
+  // Date filter helper
+  const isInRange = (dateStr?: string) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    const start = new Date(reportPeriod.start + 'T00:00:00Z');
+    const end = new Date(reportPeriod.end + 'T23:59:59Z');
+    return d >= start && d <= end;
+  };
+
   // Process Available (Missing) Patches
   const missingPatchesList: {
     deviceName: string;
+    customerName: string;
     deviceType: string;
     os: string;
     kbId: string;
@@ -72,6 +86,7 @@ export default function PatchesPage({
       agent.availablePatches.forEach((patch: any) => {
         missingPatchesList.push({
           deviceName: agent.agentName || 'Agent',
+          customerName: agent.customerName || 'Unassigned',
           deviceType: agent.deviceType || 'Workstation',
           os: agent.os || 'Windows',
           kbId: patch.kbId || patch.KBID || 'N/A',
@@ -82,54 +97,113 @@ export default function PatchesPage({
     }
   });
 
-  const totalMissingUpdates = missingPatchesList.length;
-  const uniqueDevicesNeedingUpdates = Array.from(new Set(missingPatchesList.map(p => p.deviceName)));
-  const totalDevicesNeedingUpdates = uniqueDevicesNeedingUpdates.length;
+  // Count installed patches matching the selected report date range
+  let totalInstalledPatches = 0;
+  (patchData || []).forEach(agent => {
+    const filtered = (agent.installedPatches || []).filter(p => isInRange(p.installDate));
+    totalInstalledPatches += filtered.length;
+  });
 
-  // Group devices needing updates by Device Type
-  const serverNeedingCount = patchData.filter(p => {
-    if ((p.availablePatches || []).length === 0) return false;
-    const type = String(p.deviceType || '').toLowerCase();
-    const os = String(p.os || '').toLowerCase();
-    return type.includes('server') || os.includes('server');
-  }).length;
+  const totalPendingPatches = missingPatchesList.length;
+  const totalFailedPatches = 0;
+  const totalOSPatches = totalInstalledPatches + totalPendingPatches + totalFailedPatches;
 
-  const workstationNeedingCount = patchData.filter(p => {
-    if ((p.availablePatches || []).length === 0) return false;
-    const type = String(p.deviceType || '').toLowerCase();
-    const os = String(p.os || '').toLowerCase();
-    return !type.includes('server') && !os.includes('server') && !os.includes('linux');
-  }).length;
-
-  const linuxNeedingCount = patchData.filter(p => {
-    if ((p.availablePatches || []).length === 0) return false;
-    const os = String(p.os || '').toLowerCase();
-    return os.includes('linux') || os.includes('ubuntu') || os.includes('debian');
-  }).length;
+  const totalMissingUpdates = totalPendingPatches;
+  const uniqueDevicesNeedingUpdates = Array.from(new Set(missingPatchesList.map(p => p.deviceName))).length;
 
   // Calculate missing patches counts per device type
   const workstationMissingPatches = missingPatchesList.filter(p => !p.deviceType.toLowerCase().includes('server') && !p.os.toLowerCase().includes('linux')).length;
   const serverMissingPatches = missingPatchesList.filter(p => p.deviceType.toLowerCase().includes('server') || p.os.toLowerCase().includes('server')).length;
   const linuxMissingPatches = missingPatchesList.filter(p => p.os.toLowerCase().includes('linux') || p.os.toLowerCase().includes('ubuntu')).length;
 
-  // Group devices by number of pending patches and sort descending
-  const devicesRanking = (patchData || [])
-    .map((agent: any) => {
-      const count = (agent.availablePatches || []).length;
+  // Group devices by number of pending patches and sort descending (Top 7)
+  const topDevices = (patchData || [])
+    .map(agent => {
+      const pendingCount = (agent.availablePatches || []).length;
       return {
         name: agent.agentName || 'Agent',
+        customer: agent.customerName || 'Unassigned',
         deviceType: agent.deviceType || 'Workstation',
         os: agent.os || 'Windows',
-        count
+        pendingCount
       };
     })
-    .filter(d => d.count > 0)
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
+    .filter(d => d.pendingCount > 0)
+    .sort((a, b) => b.pendingCount - a.pendingCount)
+    .slice(0, 7);
 
-  const securityMissingCount = missingPatchesList.filter(p => p.classification === 'Security Updates').length;
-  const criticalMissingCount = missingPatchesList.filter(p => p.classification === 'Critical Updates').length;
-  const otherMissingCount = totalMissingUpdates - securityMissingCount - criticalMissingCount;
+  // Group customers by pending patches count (Top 7)
+  const customerCounts: Record<string, { name: string; pendingCount: number; affectedDevices: Set<string> }> = {};
+  (patchData || []).forEach(agent => {
+    const custName = agent.customerName || 'Unassigned';
+    const pendingCount = (agent.availablePatches || []).length;
+    
+    if (!customerCounts[custName]) {
+      customerCounts[custName] = { name: custName, pendingCount: 0, affectedDevices: new Set() };
+    }
+    if (pendingCount > 0) {
+      customerCounts[custName].pendingCount += pendingCount;
+      customerCounts[custName].affectedDevices.add(agent.agentName || 'Agent');
+    }
+  });
+
+  const topCustomers = Object.values(customerCounts)
+    .map(c => ({
+      name: c.name,
+      pendingCount: c.pendingCount,
+      affectedDevices: c.affectedDevices.size
+    }))
+    .filter(c => c.pendingCount > 0)
+    .sort((a, b) => b.pendingCount - a.pendingCount)
+    .slice(0, 7);
+
+  // Group all pending patches across all devices by KB ID
+  const patchDetailsMap: Record<string, {
+    title: string;
+    kbId: string;
+    classification: string;
+    severity: string;
+    affectedDevices: Set<string>;
+  }> = {};
+
+  (patchData || []).forEach(agent => {
+    (agent.availablePatches || []).forEach((patch: any) => {
+      const kb = patch.kbId || patch.KBID || 'N/A';
+      const title = patch.name || patch.Title || 'Unknown Update';
+      const classification = patch.class || patch.PatchClassification || 'Other Updates';
+      
+      let severity = 'Medium';
+      if (classification === 'Security Updates' || classification === 'Critical Updates') {
+        severity = 'High';
+      } else if (classification === 'Updates') {
+        severity = 'Medium';
+      } else {
+        severity = 'Low';
+      }
+
+      if (!patchDetailsMap[kb]) {
+        patchDetailsMap[kb] = {
+          title,
+          kbId: kb,
+          classification,
+          severity,
+          affectedDevices: new Set()
+        };
+      }
+      patchDetailsMap[kb].affectedDevices.add(agent.agentName || 'Agent');
+    });
+  });
+
+  const pendingOSPatchesDetails = Object.values(patchDetailsMap)
+    .map(p => ({
+      title: p.title,
+      kbId: p.kbId,
+      classification: p.classification,
+      severity: p.severity,
+      affectedCount: p.affectedDevices.size
+    }))
+    .filter(p => p.kbId.startsWith('KB') || p.kbId.match(/^\d+$/))
+    .sort((a, b) => b.affectedCount - a.affectedCount);
 
   const formatDateDisplay = (dateStr: string) => {
     if (!dateStr) return '';
@@ -161,240 +235,242 @@ export default function PatchesPage({
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">
         
         {/* SECTION 1: SYSTEM KPI CARDS */}
-        <div className="grid grid-cols-4 gap-3 select-none">
-          {/* Total Pending Patches */}
+        <div className="grid grid-cols-5 gap-2 ">
+          {/* Card 1: Total OS Patches */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-                {lang === 'th' ? 'จำนวนแพตช์ค้างติดตั้ง' : 'Total Pending Patches'}
+                {lang === 'th' ? 'OS PATCH ทั้งหมด' : 'Total OS Patches'}
               </span>
-              <CheckCircle className="h-3.5 w-3.5 text-blue-500" />
+              <Info className="h-3.5 w-3.5 text-blue-500" />
             </div>
             <div>
               <h4 className="text-lg font-black text-slate-800 leading-none">
-                {lang === 'th' ? `${totalMissingUpdates} อัปเดต` : `${totalMissingUpdates} Updates`}
+                {lang === 'th' ? `${totalOSPatches} รายการ` : `${totalOSPatches} Patches`}
               </h4>
               <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
-                {lang === 'th' ? 'ค้างอัปเดตสะสม' : 'Pending OS Updates'}
+                {lang === 'th' ? 'รวมแพตช์ทั้งหมด' : 'Total Patches'}
               </p>
             </div>
           </div>
 
-          {/* Devices Needing Action */}
+          {/* Card 2: Installed Patches */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-                {lang === 'th' ? 'อุปกรณ์ที่ค้างการอัปเดต' : 'Devices Needing Patches'}
+                {lang === 'th' ? 'ติดตั้งแล้ว (Installed)' : 'Installed Patches'}
               </span>
-              <ShieldAlert className="h-3.5 w-3.5 text-rose-500" />
+              <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
+            </div>
+            <div>
+              <h4 className="text-lg font-black text-emerald-600 leading-none">
+                {lang === 'th' ? `${totalInstalledPatches} รายการ` : `${totalInstalledPatches} Patches`}
+              </h4>
+              <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
+                {lang === 'th' ? 'ติดตั้งสำเร็จ' : 'Installed'}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3: Pending Patches */}
+          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
+            <div className="flex items-center justify-between">
+              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
+                {lang === 'th' ? 'ค้างอัปเดต (Pending)' : 'Pending Patches'}
+              </span>
+              <Activity className="h-3.5 w-3.5 text-amber-500" />
+            </div>
+            <div>
+              <h4 className="text-lg font-black text-amber-600 leading-none">
+                {lang === 'th' ? `${totalPendingPatches} รายการ` : `${totalPendingPatches} Patches`}
+              </h4>
+              <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
+                {lang === 'th' ? 'ค้างติดตั้งสะสม' : 'Pending'}
+              </p>
+            </div>
+          </div>
+
+          {/* Card 4: OS Patch Failed */}
+          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
+            <div className="flex items-center justify-between">
+              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
+                {lang === 'th' ? 'ติดตั้งล้มเหลว (Failed)' : 'OS Patch Failed'}
+              </span>
+              <XCircle className="h-3.5 w-3.5 text-rose-500" />
             </div>
             <div>
               <h4 className="text-lg font-black text-rose-600 leading-none">
-                {lang === 'th' ? `${totalDevicesNeedingUpdates} เครื่อง` : `${totalDevicesNeedingUpdates} Devices`}
+                {lang === 'th' ? `${totalFailedPatches} รายการ` : `${totalFailedPatches} Patches`}
               </h4>
               <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
-                {lang === 'th' ? 'ต้องได้รับการติดตั้ง' : 'Action Required'}
+                {lang === 'th' ? 'การอัปเดตล้มเหลว' : 'Failed'}
               </p>
             </div>
           </div>
 
-          {/* Servers Needing Patches */}
+          {/* Card 5: Devices Available */}
           <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-                {lang === 'th' ? 'เซิร์ฟเวอร์ที่ค้างอัปเดต' : 'Servers Needing Patches'}
+                {lang === 'th' ? 'อุปกรณ์ค้างติดตั้ง' : 'Devices Pending'}
               </span>
-              <Server className="h-3.5 w-3.5 text-indigo-500" />
+              <Monitor className="h-3.5 w-3.5 text-indigo-500" />
             </div>
             <div>
               <h4 className="text-lg font-black text-slate-800 leading-none">
-                {lang === 'th' ? `${serverNeedingCount} เครื่อง` : `${serverNeedingCount} Servers`}
+                {lang === 'th' ? `${uniqueDevicesNeedingUpdates} เครื่อง` : `${uniqueDevicesNeedingUpdates} Devices`}
               </h4>
               <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
-                {lang === 'th' ? `เซิร์ฟเวอร์ค้าง Patch` : 'Servers Pending'}
-              </p>
-            </div>
-          </div>
-
-          {/* Workstations Needing Patches */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
-            <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-                {lang === 'th' ? 'เครื่องผู้ใช้ทั่วไปที่ค้าง' : 'Workstations Pending'}
-              </span>
-              <Laptop className="h-3.5 w-3.5 text-sky-500" />
-            </div>
-            <div>
-              <h4 className="text-lg font-black text-slate-800 leading-none">
-                {lang === 'th' ? `${workstationNeedingCount} เครื่อง` : `${workstationNeedingCount} Workstations`}
-              </h4>
-              <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
-                {lang === 'th' ? 'เครื่องทั่วไปค้าง Patch' : 'Workstations Pending'}
+                {lang === 'th' ? 'มีแพตช์ค้างอัปเดต' : 'Devices Available'}
               </p>
             </div>
           </div>
         </div>
 
-        {/* SECTION 2: CHARTS & PENDING PATCHES */}
-        <div className="grid grid-cols-5 gap-4 h-[190px] select-none">
+        {/* SECTION 2: TOP CUSTOMERS AND DEVICES WITH PENDING PATCHES */}
+        <div className="grid grid-cols-2 gap-4 h-[190px]">
           
-          {/* Top Devices Needing Updates */}
-          <div className="col-span-2 bg-white border border-slate-100 rounded-xl p-4 shadow-xs flex flex-col justify-between h-[190px]">
-            <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-              <Activity className="h-4 w-4 text-rose-500" /> {lang === 'th' ? '1. อุปกรณ์ที่ค้างติดตั้งสะสมสูงสุด (Top Devices Needing Updates)' : '1. TOP DEVICES NEEDING UPDATES'}
+          {/* Customers with Most Pending Patches */}
+          <div className="bg-white border border-slate-100 rounded-xl p-3 shadow-xs flex flex-col justify-between h-[190px]">
+            <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+              <Building2 className="h-4 w-4 text-rose-500" />
+              <span>{lang === 'th' ? 'ลูกค้าที่มีแพตช์ค้างมากที่สุด (Top 7 Customers)' : 'CUSTOMERS WITH MOST PENDING PATCHES'}</span>
             </h4>
-            <div className="space-y-2 flex-1 flex flex-col justify-center overflow-hidden">
-              {devicesRanking.map((dev, idx) => {
-                const percentage = totalMissingUpdates > 0 ? Math.round((dev.count / totalMissingUpdates) * 100) : 0;
-                return (
-                  <div key={idx} className="space-y-0.5">
-                    <div className="flex justify-between text-[8px] font-bold text-slate-600 leading-none">
-                      <span className="flex items-center gap-1">
-                        <DeviceTypeIcon deviceType={dev.deviceType} os={dev.os} className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span className="truncate max-w-[100px]">{dev.name}</span>
-                      </span>
-                      <span className="text-rose-600">
-                        {lang === 'th' ? `${dev.count} แพตช์ (${percentage}%)` : `${dev.count} Patches (${percentage}%)`}
-                      </span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                      <div className="bg-rose-500 h-full rounded-full transition-all" style={{ width: `${percentage}%` }}></div>
-                    </div>
-                  </div>
-                );
-              })}
-              {devicesRanking.length === 0 && (
-                <div className="text-center py-6 text-slate-400 font-bold text-[8.5px]">
-                  {lang === 'th' ? '✓ ไม่พบเครื่องค้างติดตั้งแพตช์' : '✓ No devices missing patches'}
-                </div>
-              )}
+            <div className="flex-1 overflow-hidden">
+              <table className="min-w-full text-[9px] text-left">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase text-[7px]">
+                    <th className="pb-1 w-[45%]">CUSTOMER</th>
+                    <th className="pb-1 w-[35%]">PENDING PATCHES</th>
+                    <th className="pb-1 text-right w-[20%]">AFFECTED DEVICES</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 font-semibold text-slate-700">
+                  {topCustomers.slice(0, 7).map((cust, idx) => {
+                    const maxPending = topCustomers[0]?.pendingCount || 1;
+                    const percent = Math.round((cust.pendingCount / maxPending) * 100);
+                    return (
+                      <tr key={idx} className="align-middle">
+                        <td className="py-1 flex items-center gap-1 font-bold text-slate-800">
+                          <span className="w-3.5 h-3.5 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-[7.5px] flex-shrink-0">
+                            {idx + 1}
+                          </span>
+                          <span className="truncate max-w-[125px]" title={cust.name}>{cust.name}</span>
+                        </td>
+                        <td className="py-1">
+                          <div className="flex items-center gap-2">
+                            <div className="w-12 h-1.5 bg-slate-100 rounded-full overflow-hidden flex-shrink-0">
+                              <div className="bg-rose-500 h-full rounded-full" style={{ width: `${percent}%` }}></div>
+                            </div>
+                            <span className="font-bold text-slate-800 text-[8.5px]">{cust.pendingCount}</span>
+                          </div>
+                        </td>
+                        <td className="py-1 text-right font-black text-slate-850 pr-1">{cust.affectedDevices}</td>
+                      </tr>
+                    );
+                  })}
+                  {topCustomers.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="text-center py-6 text-slate-400 font-bold text-[8.5px]">
+                        {lang === 'th' ? '✓ ไม่พบแพตช์ค้างตามเงื่อนไข' : '✓ No pending patches'}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {/* Pending Patches Breakdown */}
-          <div className="col-span-3 bg-white border border-slate-100 rounded-xl p-4 shadow-xs flex flex-col justify-between h-[190px]">
-            <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 mb-2">
-              <CheckCircle className="h-4 w-4 text-emerald-500" /> {lang === 'th' ? '2. สัดส่วนประเภทและระดับความสำคัญของแพตช์ที่ค้าง' : '2. PENDING PATCHES BREAKDOWN'}
+          {/* Devices with Most Pending Patches */}
+          <div className="bg-white border border-slate-100 rounded-xl p-3 shadow-xs flex flex-col justify-between h-[190px]">
+            <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 mb-1.5">
+              <Monitor className="h-4 w-4 text-blue-500" />
+              <span>{lang === 'th' ? 'อุปกรณ์ที่มีแพตช์ค้างมากที่สุด (Top 7 Devices)' : 'DEVICES WITH MOST PENDING PATCHES'}</span>
             </h4>
-            <div className="grid grid-cols-2 gap-4 flex-1 items-center overflow-hidden">
-              {/* Left Column: Device Type Breakdown */}
-              <div className="space-y-2">
-                <p className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider">
-                  {lang === 'th' ? 'แยกตามประเภทเครื่อง (Device Type)' : 'By Device Type'}
-                </p>
-                {/* Workstations */}
-                <div className="space-y-0.5">
-                  <div className="flex justify-between text-[8px] font-bold text-slate-500 leading-none">
-                    <span>Workstations</span>
-                    <span>{workstationMissingPatches}</span>
-                  </div>
-                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-blue-500 h-full rounded-full" style={{ width: totalMissingUpdates > 0 ? `${(workstationMissingPatches / totalMissingUpdates) * 100}%` : '0%' }}></div>
-                  </div>
-                </div>
-                {/* Servers */}
-                <div className="space-y-0.5">
-                  <div className="flex justify-between text-[8px] font-bold text-slate-500 leading-none">
-                    <span>Servers</span>
-                    <span>{serverMissingPatches}</span>
-                  </div>
-                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-indigo-500 h-full rounded-full" style={{ width: totalMissingUpdates > 0 ? `${(serverMissingPatches / totalMissingUpdates) * 100}%` : '0%' }}></div>
-                  </div>
-                </div>
-                {/* Linux */}
-                <div className="space-y-0.5">
-                  <div className="flex justify-between text-[8px] font-bold text-slate-500 leading-none">
-                    <span>Linux / Others</span>
-                    <span>{linuxMissingPatches}</span>
-                  </div>
-                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: totalMissingUpdates > 0 ? `${(linuxMissingPatches / totalMissingUpdates) * 100}%` : '0%' }}></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column: Severity Breakdown */}
-              <div className="space-y-2 border-l border-slate-105 pl-4">
-                <p className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider">
-                  {lang === 'th' ? 'แยกตามระดับความสำคัญ (Severity)' : 'By Classification'}
-                </p>
-                {/* Security Updates */}
-                <div className="space-y-0.5">
-                  <div className="flex justify-between text-[8px] font-bold text-slate-500 leading-none">
-                    <span>Security Updates</span>
-                    <span className="text-rose-600">{securityMissingCount}</span>
-                  </div>
-                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-rose-500 h-full rounded-full" style={{ width: totalMissingUpdates > 0 ? `${(securityMissingCount / totalMissingUpdates) * 100}%` : '0%' }}></div>
-                  </div>
-                </div>
-                {/* Critical Updates */}
-                <div className="space-y-0.5">
-                  <div className="flex justify-between text-[8px] font-bold text-slate-500 leading-none">
-                    <span>Critical Updates</span>
-                    <span className="text-orange-500">{criticalMissingCount}</span>
-                  </div>
-                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-orange-500 h-full rounded-full" style={{ width: totalMissingUpdates > 0 ? `${(criticalMissingCount / totalMissingUpdates) * 100}%` : '0%' }}></div>
-                  </div>
-                </div>
-                {/* Other Updates */}
-                <div className="space-y-0.5">
-                  <div className="flex justify-between text-[8px] font-bold text-slate-500 leading-none">
-                    <span>Other Updates</span>
-                    <span>{otherMissingCount}</span>
-                  </div>
-                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-slate-400 h-full rounded-full" style={{ width: totalMissingUpdates > 0 ? `${(otherMissingCount / totalMissingUpdates) * 100}%` : '0%' }}></div>
-                  </div>
-                </div>
-              </div>
+            <div className="flex-1 overflow-hidden">
+              <table className="min-w-full text-[9px] text-left">
+                <thead>
+                  <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase text-[7px]">
+                    <th className="pb-1 w-[40%]">DEVICE NAME</th>
+                    <th className="pb-1 w-[40%]">CUSTOMER</th>
+                    <th className="pb-1 text-right w-[20%]">PENDING PATCHES</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 font-semibold text-slate-700">
+                  {topDevices.slice(0, 7).map((dev, idx) => {
+                    return (
+                      <tr key={idx} className="align-middle">
+                        <td className="py-1 flex items-center gap-1 font-bold text-slate-800">
+                          <DeviceTypeIcon deviceType={dev.deviceType} os={dev.os} className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="truncate max-w-[100px]" title={dev.name}>{dev.name}</span>
+                        </td>
+                        <td className="py-1 text-slate-500 truncate max-w-[100px]" title={dev.customer}>{dev.customer}</td>
+                        <td className="py-1 text-right">
+                          <span className="inline-flex items-center justify-center font-black text-rose-600 bg-rose-50 border border-rose-100 rounded px-1.5 py-0.5 min-w-[24px] text-[8.5px]">
+                            {dev.pendingCount}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {topDevices.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="text-center py-6 text-slate-400 font-bold text-[8.5px]">
+                        {lang === 'th' ? '✓ ไม่พบเครื่องค้างติดตั้งแพตช์' : '✓ No devices missing patches'}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
 
         </div>
 
-        {/* SECTION 3: SYSTEM PENDING PATCHES TABLE */}
+        {/* SECTION 3: SYSTEM PENDING PATCHES DETAILS TABLE */}
         <div className="space-y-1.5 flex-1 flex flex-col justify-end">
-          <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 select-none">
-            <Server className="h-3.5 w-3.5 text-blue-500" /> {lang === 'th' ? '3. บันทึกรายละเอียดอุปกรณ์และแพตช์ที่ค้างอัปเดต (Pending OS Patches Registry)' : '3. PENDING OS PATCHES REGISTRY'}
-          </h3>
+          <div className="flex flex-col ">
+            <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <Server className="h-3.5 w-3.5 text-blue-500" />
+              <span>{lang === 'th' ? '3. รายละเอียดแพตช์ระบบปฏิบัติการที่ค้างการติดตั้ง (Pending OS Patches Details)' : '3. PENDING OS PATCHES DETAILS'}</span>
+            </h3>
+            <p className="text-[7px] text-slate-400 font-bold uppercase ml-5 tracking-wide leading-none mt-0.5">
+              Top pending patches across all devices
+            </p>
+          </div>
+          
           <div className="border border-slate-100 rounded-lg overflow-hidden bg-white/70 backdrop-blur-xs shadow-xs flex-1">
-            <table className="min-w-full divide-y divide-slate-100 text-[10px] text-left">
-              <thead className="bg-[#0f4c81] text-white font-bold uppercase tracking-wider text-[7.5px]">
+            <table className="min-w-full divide-y divide-slate-100 text-[9.5px] text-left">
+              <thead className="bg-[#0f4c81] text-white font-bold uppercase tracking-wider text-[7px]">
                 <tr>
-                  <th className="px-4 py-2 w-[22%]">{lang === 'th' ? 'ชื่ออุปกรณ์' : 'DEVICE NAME'}</th>
-                  <th className="px-4 py-2 w-[18%]">{lang === 'th' ? 'ประเภทเครื่อง' : 'DEVICE TYPE'}</th>
-                  <th className="px-4 py-2 text-center w-[12%]">KB ID</th>
-                  <th className="px-4 py-2 w-[33%]">{lang === 'th' ? 'ชื่อแพตช์ที่ค้างติดตั้ง' : 'PENDING PATCH NAME'}</th>
-                  <th className="px-4 py-2 text-right w-[15%]">{lang === 'th' ? 'ประเภทอัปเดต' : 'CLASSIFICATION'}</th>
+                  <th className="px-4 py-2 w-[45%]">PATCH TITLE</th>
+                  <th className="px-4 py-2 w-[15%]">KB / ARTICLE</th>
+                  <th className="px-4 py-2 text-center w-[12%]">SEVERITY</th>
+                  <th className="px-4 py-2 w-[18%]">CLASSIFICATION</th>
+                  <th className="px-4 py-2 text-right w-[10%]">PENDING DEVICES</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-semibold bg-white/50">
-                {missingPatchesList.slice(0, 7).map((p, idx) => {
+                {pendingOSPatchesDetails.slice(0, 11).map((p, idx) => {
                   return (
                     <tr key={idx} className="hover:bg-slate-50/20 transition-colors">
-                      <td className="px-4 py-2 font-bold text-slate-800 flex items-center gap-2">
-                        <DeviceTypeIcon deviceType={p.deviceType} os={p.os} className="w-3.5 h-3.5 flex-shrink-0" />
-                        <span className="truncate max-w-[120px]">{p.deviceName}</span>
-                      </td>
-                      <td className="px-4 py-2 text-slate-400 font-bold uppercase text-[8px]">{p.deviceType}</td>
-                      <td className="px-4 py-2 text-center font-mono text-slate-500 font-bold">{p.kbId}</td>
-                      <td className="px-4 py-2 text-slate-650 truncate max-w-[200px]" title={p.title}>{p.title}</td>
-                      <td className="px-4 py-2 text-right">
-                        <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[8px] font-extrabold border ${
-                          p.classification === 'Security Updates' ? 'bg-[#ffebee] text-red-700 border-red-200' : 
-                          p.classification === 'Critical Updates' ? 'bg-[#fff3e0] text-orange-700 border-orange-200' :
-                          'bg-slate-50 text-slate-600 border-slate-200'
+                      <td className="px-4 py-2 font-bold text-slate-800 truncate max-w-[250px]" title={p.title}>{p.title}</td>
+                      <td className="px-4 py-2 font-mono text-slate-500 font-bold">{p.kbId}</td>
+                      <td className="px-4 py-2 text-center">
+                        <span className={`inline-flex items-center rounded px-2 py-0.5 text-[8px] font-extrabold border ${
+                          p.severity === 'High' ? 'bg-rose-50 text-rose-600 border-rose-200' :
+                          p.severity === 'Medium' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                          'bg-slate-50 text-slate-500 border-slate-205'
                         }`}>
-                          {p.classification}
+                          {p.severity}
                         </span>
                       </td>
+                      <td className="px-4 py-2 text-slate-550 truncate max-w-[120px]" title={p.classification}>{p.classification}</td>
+                      <td className="px-4 py-2 text-right font-black text-rose-650">{p.affectedCount}</td>
                     </tr>
                   );
                 })}
-                {missingPatchesList.length === 0 && (
+                {pendingOSPatchesDetails.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-4 py-6 text-center text-slate-400 font-bold text-[9.5px]">
                       {lang === 'th' ? '✓ ยินดีด้วย! อุปกรณ์ทั้งหมดได้รับการอัปเดตครบถ้วน' : '✓ Congratulations! All devices are fully patched'}
@@ -409,7 +485,7 @@ export default function PatchesPage({
       </div>
 
       {/* Page Footer */}
-      <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
+      <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3  flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
         <span>
           {lang === 'th' ? `หน้า ${pageNumber} จาก ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}

@@ -114,8 +114,11 @@ export default function DevicesPage({
   const otherPercent = totalDevices > 0 ? Math.round((otherCount / totalDevices) * 100) : 0;
 
   // Horizontal bar scale calculation
-  const maxDevices = Math.max(...topCustomersChart.map(c => c.totalCustDevices)) || 1;
-  const scaleTicks = Array.from({ length: 6 }, (_, idx) => Math.round((maxDevices / 5) * idx));
+  const maxDevices = topCustomersChart.length > 0
+    ? Math.max(...topCustomersChart.map(c => c.totalCustDevices))
+    : 1;
+  const safeMaxDevices = isNaN(maxDevices) || maxDevices <= 0 || maxDevices === -Infinity || maxDevices === Infinity ? 1 : maxDevices;
+  const scaleTicks = Array.from({ length: 6 }, (_, idx) => Math.round((safeMaxDevices / 5) * idx));
 
   // Windows SVG Logo Helper
   const renderWindowsLogo = () => (
@@ -145,7 +148,7 @@ export default function DevicesPage({
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">
         
         {/* SECTION 1: CUSTOMER SUMMARY & DEVICE SUMMARY (With Premium Icons & English values) */}
-        <div className="flex justify-between gap-4 select-none">
+        <div className="flex justify-between gap-4 ">
           
           {/* Customer Summary (Left Side) */}
           <div className="w-[49%] space-y-1.5">
@@ -309,7 +312,7 @@ export default function DevicesPage({
         </div>
 
         {/* SECTION 2: CHARTS SIDE-BY-SIDE (Fixed Height layout to resolve vertical stretching) */}
-        <div className="grid grid-cols-2 gap-4 h-[210px] select-none">
+        <div className="grid grid-cols-2 gap-4 h-[210px] ">
           
           {/* Customer Distribution Chart */}
           <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-xs flex flex-col justify-between h-[210px]">
@@ -431,7 +434,7 @@ export default function DevicesPage({
 
         {/* SECTION 3: TOP CUSTOMERS INVENTORY TABLE */}
         <div className="space-y-1.5 flex-1 flex flex-col justify-end">
-          <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 select-none">
+          <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 ">
             <Server className="h-3.5 w-3.5 text-blue-500" /> {lang === 'th' ? '5. สินทรัพย์อุปกรณ์แยกตามลูกค้า (TOP CUSTOMER INVENTORY)' : '5. TOP CUSTOMER INVENTORY'}
           </h3>
           <div className="border border-slate-100 rounded-lg overflow-hidden bg-white/70 backdrop-blur-xs shadow-xs flex-1">
@@ -513,7 +516,7 @@ export default function DevicesPage({
       </div>
 
       {/* Page Footer */}
-      <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
+      <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3  flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
         <span>
           {lang === 'th' ? `หน้า ${pageNumber} จาก ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}

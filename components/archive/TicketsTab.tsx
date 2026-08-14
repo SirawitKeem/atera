@@ -148,7 +148,7 @@ export default function TicketsTab({ tickets }: TicketsTabProps) {
                 setPriorityFilter('__all');
                 setStatusFilter('__all');
               }}
-              className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer select-none"
+              className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer "
             >
               Clear filters
             </button>
@@ -164,7 +164,7 @@ export default function TicketsTab({ tickets }: TicketsTabProps) {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider select-none">
+              <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider ">
                 <th className="px-6 py-4 w-24 text-center">Ticket ID</th>
                 <th className="px-6 py-4">Title Description</th>
                 <th className="px-6 py-4">Client Name</th>

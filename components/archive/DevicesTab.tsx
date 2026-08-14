@@ -185,7 +185,7 @@ export default function DevicesTab({ agents }: DevicesTabProps) {
     return (
       <th
         onClick={() => handleSort(field)}
-        className="px-6 py-4 cursor-pointer select-none hover:bg-slate-100/50 transition-colors group"
+        className="px-6 py-4 cursor-pointer  hover:bg-slate-100/50 transition-colors group"
       >
         <div className="flex items-center gap-1.5 justify-start font-bold">
           <span>{label}</span>
@@ -211,7 +211,7 @@ export default function DevicesTab({ agents }: DevicesTabProps) {
             <button
               key={tab.id}
               onClick={() => setSelectedTab(tab.id as any)}
-              className={`pb-3.5 text-sm font-semibold relative transition-colors cursor-pointer flex items-center gap-2 select-none ${
+              className={`pb-3.5 text-sm font-semibold relative transition-colors cursor-pointer flex items-center gap-2  ${
                 isActive ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'
               }`}
             >
@@ -267,7 +267,7 @@ export default function DevicesTab({ agents }: DevicesTabProps) {
                 setSearchQuery('');
                 setSelectedOs('__all');
               }}
-              className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer select-none"
+              className="text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer "
             >
               Clear filters
             </button>
@@ -283,7 +283,7 @@ export default function DevicesTab({ agents }: DevicesTabProps) {
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider select-none">
+              <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider ">
                 <th className="px-6 py-4 w-12 text-center">
                   <input type="checkbox" className="rounded-sm border-slate-300 accent-blue-600 cursor-pointer" />
                 </th>

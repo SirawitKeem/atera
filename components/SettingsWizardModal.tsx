@@ -286,7 +286,7 @@ export default function SettingsWizardModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto select-none font-sans">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto  font-sans">
       <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col my-auto transition-all duration-300 border-t-4 border-t-[#E20074]">
         
         {/* MODAL HEADER */}

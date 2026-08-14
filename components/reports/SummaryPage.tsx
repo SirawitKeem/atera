@@ -109,7 +109,7 @@ export default function SummaryPage({
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-2">
 
         {/* SECTION 1: KPI CARDS (4 Cards: Customers, Devices, Alerts, Tickets) */}
-        <div className="grid grid-cols-4 gap-3 select-none">
+        <div className="grid grid-cols-4 gap-3 ">
           
           {/* Card 1: Customers */}
           <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs">
@@ -162,7 +162,7 @@ export default function SummaryPage({
         </div>
 
         {/* SECTION 2: SERVICE DESK & MONITORING SUMMARY (Side-by-side) */}
-        <div className="grid grid-cols-2 gap-4 select-none">
+        <div className="grid grid-cols-2 gap-4 ">
           
           {/* Tickets Overview Card */}
           <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs h-[120px]">
@@ -317,7 +317,7 @@ export default function SummaryPage({
       </div>
 
       {/* Page Footer (Dynamic, professional layout) */}
-      <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
+      <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3  flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
         <span>หน้า {pageNumber} จาก {totalPages}</span>
       </div>

@@ -6,7 +6,6 @@ import SettingsWizardModal from './SettingsWizardModal';
 import CoverPage from './reports/CoverPage';
 import SummaryPage from './reports/SummaryPage';
 import DevicesPage from './reports/DevicesPage';
-import HealthPage from './reports/HealthPage';
 import AlertsPage from './reports/AlertsPage';
 import PatchesPage from './reports/PatchesPage';
 import SoftwarePage from './reports/SoftwarePage';
@@ -24,16 +23,17 @@ interface ReportViewProps {
     contacts: any[];
     patchData: any[];
     accountInfo: any;
+    softwareData?: any[];
   };
   isMock: boolean;
   errorMsg: string | null;
 }
 
 export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) {
-  const { customers, agents, tickets, alerts: rawAlerts, contracts, workhours, contacts, patchData } = data;
+  const { customers, agents, tickets, alerts: rawAlerts, contracts, workhours, contacts, patchData, softwareData } = data;
 
   // ===== TOTAL PAGES CONSTANT =====
-  const totalPages = 9;
+  const totalPages = 8;
 
   // ===== DATE RANGE PICKER STATE (default: 30 days back from today) =====
   const today = new Date();
@@ -351,10 +351,11 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         companyName={companyName}
       />
 
-      {/* PAGE 5: AVAILABLE OS PATCHES */}
+      {/* PAGE 5: SOFTWARE INVENTORY & UPDATES */}
       <SoftwarePage 
         pageNumber={5}
-        patchData={patchData}
+        agents={agents}
+        softwareData={softwareData || []}
         reportPeriod={reportPeriod}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
@@ -403,15 +404,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         companyName={companyName}
       />
 
-      {/* PAGE 9: DEVICE AVAILABILITY & HEALTH */}
-      <HealthPage 
-        pageNumber={9}
-        agents={agents}
-        dateRangeDisplay={dateRangeDisplay}
-        totalPages={totalPages}
-        lang={language}
-        companyName={companyName}
-      />
+
 
     </div>
   );

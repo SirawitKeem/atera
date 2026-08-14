@@ -113,7 +113,7 @@ export default function RiskScorecardPage({
 
         {/* SECTION 3: RISK SCORECARD TABLE */}
         <div className="space-y-1.5 flex-1 flex flex-col justify-end">
-          <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 select-none">
+          <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 ">
             <Server className="h-3.5 w-3.5 text-blue-500" /> {lang === 'th' ? '3. ตารางประเมินผลความมั่นคงปลอดภัยลูกค้ารายละเอียด (Client Security Scorecard)' : '3. CLIENT SECURITY SCORECARD'}
           </h3>
           <div className="border border-slate-100 rounded-lg overflow-hidden bg-white/70 backdrop-blur-xs shadow-xs flex-1">
@@ -171,7 +171,7 @@ export default function RiskScorecardPage({
       </div>
 
       {/* Page Footer */}
-      <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3 select-none flex justify-between">
+      <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3  flex justify-between">
         <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
         <span>
           {lang === 'th' ? `หน้า ${pageNumber} จาก ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}
