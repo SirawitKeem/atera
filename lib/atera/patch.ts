@@ -7,4 +7,4 @@ export const patchApi = {
   getAvailablePatches: async (deviceGuid: string) => {
     return fetchAtera<any>(`agents/${deviceGuid}/available-patches`);
   }
-};
+}; 

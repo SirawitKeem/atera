@@ -98,10 +98,9 @@ export default function SummaryPage({
         padding: '12mm 12mm'
       }}
     >
-      {/* Report Header */}
       <ReportHeader 
         title={t.summaryTitle} 
-        subtitle={`${t.summarySubtitle} | Client: ${companyName} | Period: ${dateRangeDisplay || 'N/A'}`} 
+        subtitle={t.summarySubtitle} 
         dateRangeDisplay={dateRangeDisplay}
         lang={lang}
       />
@@ -318,7 +317,7 @@ export default function SummaryPage({
 
       {/* Page Footer (Dynamic, professional layout) */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3  flex justify-between">
-        <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
+        <span>Generated from Atera API v3 | Powered by Ally Assist</span>
         <span>หน้า {pageNumber} จาก {totalPages}</span>
       </div>
     </div>

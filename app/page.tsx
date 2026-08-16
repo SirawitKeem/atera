@@ -1,13 +1,14 @@
 import React from 'react';
 import ReportView from '@/components/ReportView';
 import { AteraClient } from '@/lib/atera-client';
+import { enrichPatchesWithCve } from '@/lib/atera/cve';
 
 export const dynamic = 'force-dynamic';
 
 async function fetchAllPages<T>(fetchFn: (params: any) => Promise<any>, initialParams: any = {}): Promise<T[]> {
   let allItems: T[] = [];
   let page = 1;
-  let hasMore = true;
+  let hasMore = true; 
   const itemsInPage = 100;
 
   while (hasMore) {
@@ -42,6 +43,7 @@ export default async function Page() {
   let patchData: any[] = [];
   let realSoftwareUpdates: any[] = [];
   let accountInfo: Record<string, unknown> | null = null;
+  let cveData: any = { kbCveMap: {}, cveCache: {} };
   let errorMsg: string | null = null;
 
   try {
@@ -101,39 +103,22 @@ export default async function Page() {
       console.log(`[API Log] Fetching patches for ${agentName} (${deviceGuid})...`);
 
       try {
-        const [installedRes, availableRes] = await Promise.all([
-          AteraClient.getInstalledPatches(deviceGuid),
-          AteraClient.getAvailablePatches(deviceGuid)
+        const [availableRes, installedRes] = await Promise.all([
+          AteraClient.getAvailablePatches(deviceGuid),
+          AteraClient.getInstalledPatches(deviceGuid)
         ]);
 
         let availablePatchesList = availableRes?.availableUpdates || availableRes || [];
         let installedPatchesList = installedRes?.installedUpdates || installedRes || [];
 
-        // Fallback for Linux agent: if it is Linux and the API returns 0 available patches,
-        // we populate it with the 21 package upgrades so that the report displays the actual status of the Linux device
-        // as seen in the Atera console.
+        // Handle empty available arrays for Linux agents by logging warnings instead of injecting mock data
         if (isLinux) {
           if (availablePatchesList.length === 0) {
-            console.log(`[API Fallback] Linux agent ${agentName} has empty available patches list in API. Injecting 21 updates.`);
-            availablePatchesList = Array.from({ length: 21 }).map((_, i) => ({
-              kbId: `LNX-PKG-${String(i+1).padStart(3, '0')}`,
-              name: `linux-package-${i+1} (Upgradable)`,
-              class: 'Updates',
-              status: 'Available'
-            }));
-          }
-          if (installedPatchesList.length === 0) {
-            console.log(`[API Fallback] Linux agent ${agentName} has empty installed patches list in API. Injecting 669 installed packages.`);
-            installedPatchesList = Array.from({ length: 669 }).map((_, i) => ({
-              kbId: `PKG-${String(i+1).padStart(3, '0')}`,
-              name: `linux-package-${i+1} (Installed)`,
-              class: 'Updates',
-              installDate: '2026-05-15T12:00:00Z'
-            }));
+            console.warn(`[WARN] Linux agent ${agentName} (${deviceGuid}) returned 0 available patches. This might mean the agent is not scanning, is offline, or Atera public API does not return Linux packages.`);
           }
         }
 
-        console.log(`[API Log] ${agentName} patches: ${availablePatchesList.length} available, ${installedPatchesList.length} installed.`);
+        console.log(`[API Log] ${agentName} patches: ${availablePatchesList.length} available (pending).`);
 
         return {
           agentName: agentName,
@@ -162,38 +147,10 @@ export default async function Page() {
     const patchResults = await Promise.all(patchPromises);
     patchData = patchResults.filter(p => p !== null);
 
-    // Extract real software/application updates from available patches
-    patchData.forEach((agent: any) => {
-      const available = agent.availablePatches || [];
-      available.forEach((patch: any) => {
-        const name = String(patch.name || '');
-        const classification = String(patch.class || '');
-        
-        const isSoftware = 
-          classification.includes('Definition') || 
-          classification.includes('driver') || 
-          classification.includes('Updates') || 
-          name.includes('SQL Server') || 
-          name.includes('ODBC') || 
-          name.includes('OLE DB') || 
-          name.includes('Office') || 
-          name.includes('Defender');
-          
-        if (isSoftware) {
-          realSoftwareUpdates.push({
-            softwareName: name,
-            currentVersion: "Local",
-            availableVersion: patch.kbId || "Available",
-            status: "Available",
-            agentName: agent.agentName,
-            customerName: agent.customerName,
-            deviceGuid: agent.deviceGuid,
-            deviceType: agent.deviceType,
-            os: agent.os
-          });
-        }
-      });
-    });
+    console.log(`[API Log] Processing CVEs for available patches...`);
+    cveData = await enrichPatchesWithCve(patchData);
+
+    // No software inventory API exists in Atera. Software-related page and derived data were removed.
 
     // Extract & Combine Tickets
     const ticketMap = new Map();
@@ -226,7 +183,7 @@ export default async function Page() {
     contacts: contactsData,
     patchData: patchData,
     accountInfo: accountInfo,
-    softwareData: realSoftwareUpdates
+    cveData: cveData
   };
 
   return (

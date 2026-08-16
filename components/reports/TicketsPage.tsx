@@ -84,10 +84,9 @@ export default function TicketsPage({
         padding: '12mm 12mm'
       }}
     >
-      {/* Report Header */}
       <ReportHeader 
         title={t.ticketsTitle} 
-        subtitle={`${t.ticketsSubtitle} | Client: ${companyName} | Period: ${dateRangeDisplay || 'N/A'}`} 
+        subtitle={t.ticketsSubtitle} 
         lang={lang}
         dateRangeDisplay={dateRangeDisplay}
       />
@@ -312,7 +311,7 @@ export default function TicketsPage({
 
       {/* Page Footer */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3  flex justify-between">
-        <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
+        <span>Generated from Atera API v3 | Powered by Ally Assist</span>
         <span>
           {lang === 'th' ? `หน้า ${pageNumber} จาก ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}
         </span>

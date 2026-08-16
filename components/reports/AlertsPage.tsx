@@ -91,10 +91,9 @@ export default function AlertsPage({
         padding: '12mm 12mm'
       }}
     >
-      {/* Report Header */}
       <ReportHeader 
         title={t.alertsTitle} 
-        subtitle={`${t.alertsSubtitle} | Client: ${companyName} | Period: ${dateRangeDisplay || 'N/A'}`} 
+        subtitle={t.alertsSubtitle} 
         lang={lang}
         dateRangeDisplay={dateRangeDisplay}
       />
@@ -170,33 +169,7 @@ export default function AlertsPage({
           </div>
         </div>
 
-        {/* SECTION 2: ALERT CATEGORIES BREAKDOWN */}
-        <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-xs flex flex-col justify-between h-[125px]">
-          <h4 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 mb-2 ">
-            <Activity className="h-3.5 w-3.5 text-blue-500" /> {lang === 'th' ? 'สถิติตามหมวดหมู่อุปกรณ์ (Alert Impact Categories)' : 'ALERT IMPACT CATEGORIES'}
-          </h4>
-          <div className="grid grid-cols-4 gap-3 flex-1 items-center">
-            {categories.map((cat, idx) => {
-              const pct = totalAlerts > 0 ? Math.round((cat.count / totalAlerts) * 100) : 0;
-              return (
-                <div key={idx} className="bg-slate-50 border border-slate-100 rounded-lg p-2.5 flex flex-col justify-between h-full">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[8px] font-extrabold text-slate-500 truncate max-w-[90px]">{cat.name}</span>
-                    <span className="text-[8px] font-black text-slate-700">{cat.count}</span>
-                  </div>
-                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden my-1">
-                    <div className={`${cat.color} h-full rounded-full`} style={{ width: `${pct}%` }}></div>
-                  </div>
-                  <span className="text-[7px] text-slate-400 font-bold text-right">
-                    {lang === 'th' ? `ทั้งหมด ${pct}%` : `${pct}% total`}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* SECTION 3: RECENT ALERTS DETAIL TABLE */}
+        {/* SECTION 2: RECENT ALERTS DETAIL TABLE */}
         <div className="space-y-1.5 flex-1 flex flex-col justify-end">
           <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 ">
             <FileCheck className="h-3.5 w-3.5 text-blue-500" /> {lang === 'th' ? 'บันทึกรายการแจ้งเตือนล่าสุดในระบบ (Real-Time Security & System Events)' : 'REAL-TIME SECURITY & SYSTEM EVENTS'}
@@ -213,7 +186,7 @@ export default function AlertsPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-semibold bg-white/50">
-                {alerts.slice(0, 6).map((a, idx) => {
+                {alerts.slice(0, 10).map((a, idx) => {
                   const device = a.DeviceName || a.device || 'N/A';
                   const customer = a.CustomerName || a.customer || 'Unassigned';
                   const severity = a.Severity || a.severity || 'Warning';
@@ -248,7 +221,7 @@ export default function AlertsPage({
 
       {/* Page Footer */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3  flex justify-between">
-        <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
+        <span>Generated from Atera API v3 | Powered by Ally Assist</span>
         <span>
           {lang === 'th' ? `หน้า ${pageNumber} จาก ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}
         </span>

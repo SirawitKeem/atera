@@ -6,9 +6,9 @@ import SettingsWizardModal from './SettingsWizardModal';
 import CoverPage from './reports/CoverPage';
 import SummaryPage from './reports/SummaryPage';
 import DevicesPage from './reports/DevicesPage';
-import AlertsPage from './reports/AlertsPage';
 import PatchesPage from './reports/PatchesPage';
-import SoftwarePage from './reports/SoftwarePage';
+import CVEPage from './reports/CVEPage';
+import AlertsPage from './reports/AlertsPage';
 import TicketsPage from './reports/TicketsPage';
 import RiskScorecardPage from './reports/RiskScorecardPage';
 
@@ -23,14 +23,14 @@ interface ReportViewProps {
     contacts: any[];
     patchData: any[];
     accountInfo: any;
-    softwareData?: any[];
+    cveData?: any;
   };
   isMock: boolean;
   errorMsg: string | null;
 }
 
 export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) {
-  const { customers, agents, tickets, alerts: rawAlerts, contracts, workhours, contacts, patchData, softwareData } = data;
+  const { customers, agents, tickets, alerts: rawAlerts, contracts, workhours, contacts, patchData, cveData } = data;
 
   // ===== TOTAL PAGES CONSTANT =====
   const totalPages = 8;
@@ -351,11 +351,12 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         companyName={companyName}
       />
 
-      {/* PAGE 5: SOFTWARE INVENTORY & UPDATES */}
-      <SoftwarePage 
+      {/* PAGE 5: VULNERABILITY & CVE ASSESSMENT */}
+      <CVEPage 
         pageNumber={5}
         agents={agents}
-        softwareData={softwareData || []}
+        patchData={patchData}
+        cveData={cveData}
         reportPeriod={reportPeriod}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
@@ -398,6 +399,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         alerts={alerts}
         tickets={filteredTickets}
         patchData={patchData}
+        cveData={cveData}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
         lang={language}

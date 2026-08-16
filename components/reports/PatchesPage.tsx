@@ -2,44 +2,23 @@
 
 import React from 'react';
 import { 
-  ShieldCheck, 
-  Terminal,
-  Activity,
-  Server,
-  Laptop,
-  Cpu,
-  Monitor,
-  CheckCircle,
-  ShieldAlert,
+  ShieldAlert, 
+  Activity, 
+  CheckCircle, 
+  XCircle, 
   Info,
-  XCircle,
-  Building2
+  Server,
+  Building2,
+  Monitor
 } from 'lucide-react';
 import ReportHeader from './ReportHeader';
-import { translations } from '@/lib/translations';
 import DeviceTypeIcon from './DeviceTypeIcon';
-
-interface Patch {
-  name: string;
-  class: string;
-  kbId: string;
-  installDate?: string;
-}
-
-interface AgentData {
-  agentName: string;
-  customerName?: string;
-  deviceGuid: string;
-  os: string;
-  deviceType: string;
-  installedPatches?: Patch[];
-  availablePatches?: any[];
-}
+import { translations } from '@/lib/translations';
 
 interface PatchesPageProps {
   pageNumber: number;
   agents: any[];
-  patchData: AgentData[];
+  patchData: any[];
   reportPeriod: { start: string; end: string };
   totalPages?: number;
   dateRangeDisplay?: string;
@@ -89,7 +68,7 @@ export default function PatchesPage({
           customerName: agent.customerName || 'Unassigned',
           deviceType: agent.deviceType || 'Workstation',
           os: agent.os || 'Windows',
-          kbId: patch.kbId || patch.KBID || 'N/A',
+          kbId: patch.kbId || patch.KBID || patch.name || patch.Title || 'N/A',
           title: patch.name || patch.Title || 'Unknown Update',
           classification: patch.class || patch.PatchClassification || 'Other Updates'
         });
@@ -100,7 +79,7 @@ export default function PatchesPage({
   // Count installed patches matching the selected report date range
   let totalInstalledPatches = 0;
   (patchData || []).forEach(agent => {
-    const filtered = (agent.installedPatches || []).filter(p => isInRange(p.installDate));
+    const filtered = (agent.installedPatches || []).filter((p: any) => isInRange(p.installDate));
     totalInstalledPatches += filtered.length;
   });
 
@@ -168,7 +147,7 @@ export default function PatchesPage({
 
   (patchData || []).forEach(agent => {
     (agent.availablePatches || []).forEach((patch: any) => {
-      const kb = patch.kbId || patch.KBID || 'N/A';
+      const kb = patch.kbId || patch.KBID || patch.name || patch.Title || 'N/A';
       const title = patch.name || patch.Title || 'Unknown Update';
       const classification = patch.class || patch.PatchClassification || 'Other Updates';
       
@@ -202,7 +181,7 @@ export default function PatchesPage({
       severity: p.severity,
       affectedCount: p.affectedDevices.size
     }))
-    .filter(p => p.kbId.startsWith('KB') || p.kbId.match(/^\d+$/))
+    .filter(p => p.kbId && p.kbId !== 'N/A')
     .sort((a, b) => b.affectedCount - a.affectedCount);
 
   const formatDateDisplay = (dateStr: string) => {
@@ -211,8 +190,7 @@ export default function PatchesPage({
     return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
-  const formattedPeriod = `${formatDateDisplay(reportPeriod.start)} - ${formatDateDisplay(reportPeriod.end)}`;
-  const headerSubtitle = `${t.patchesSubtitle} | Client: ${companyName} | Period: ${dateRangeDisplay || formattedPeriod}`;
+  const headerSubtitle = t.patchesSubtitle;
 
   return (
     <div 
@@ -232,15 +210,15 @@ export default function PatchesPage({
         dateRangeDisplay={dateRangeDisplay}
       />
 
-      <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">
+      <div className="page-content space-y-3.5 flex-1 flex flex-col justify-between overflow-hidden mt-3">
         
         {/* SECTION 1: SYSTEM KPI CARDS */}
         <div className="grid grid-cols-5 gap-2 ">
           {/* Card 1: Total OS Patches */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
+          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[64px]">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-                {lang === 'th' ? 'OS PATCH ทั้งหมด' : 'Total OS Patches'}
+                {lang === 'th' ? 'OS PATCH ทั้งหมด' : 'TOTAL OS PATCHES'}
               </span>
               <Info className="h-3.5 w-3.5 text-blue-500" />
             </div>
@@ -248,17 +226,14 @@ export default function PatchesPage({
               <h4 className="text-lg font-black text-slate-800 leading-none">
                 {lang === 'th' ? `${totalOSPatches} รายการ` : `${totalOSPatches} Patches`}
               </h4>
-              <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
-                {lang === 'th' ? 'รวมแพตช์ทั้งหมด' : 'Total Patches'}
-              </p>
             </div>
           </div>
 
           {/* Card 2: Installed Patches */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
+          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[64px]">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-                {lang === 'th' ? 'ติดตั้งแล้ว (Installed)' : 'Installed Patches'}
+                {lang === 'th' ? 'ติดตั้งแล้ว (Installed)' : 'INSTALLED PATCHES'}
               </span>
               <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
             </div>
@@ -266,17 +241,14 @@ export default function PatchesPage({
               <h4 className="text-lg font-black text-emerald-600 leading-none">
                 {lang === 'th' ? `${totalInstalledPatches} รายการ` : `${totalInstalledPatches} Patches`}
               </h4>
-              <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
-                {lang === 'th' ? 'ติดตั้งสำเร็จ' : 'Installed'}
-              </p>
             </div>
           </div>
 
           {/* Card 3: Pending Patches */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
+          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[64px]">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-                {lang === 'th' ? 'ค้างอัปเดต (Pending)' : 'Pending Patches'}
+                {lang === 'th' ? 'ค้างอัปเดต (Pending)' : 'PENDING PATCHES'}
               </span>
               <Activity className="h-3.5 w-3.5 text-amber-500" />
             </div>
@@ -284,17 +256,14 @@ export default function PatchesPage({
               <h4 className="text-lg font-black text-amber-600 leading-none">
                 {lang === 'th' ? `${totalPendingPatches} รายการ` : `${totalPendingPatches} Patches`}
               </h4>
-              <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
-                {lang === 'th' ? 'ค้างติดตั้งสะสม' : 'Pending'}
-              </p>
             </div>
           </div>
 
           {/* Card 4: OS Patch Failed */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
+          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[64px]">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-                {lang === 'th' ? 'ติดตั้งล้มเหลว (Failed)' : 'OS Patch Failed'}
+                {lang === 'th' ? 'ติดตั้งล้มเหลว (Failed)' : 'OS PATCH FAILED'}
               </span>
               <XCircle className="h-3.5 w-3.5 text-rose-500" />
             </div>
@@ -302,17 +271,14 @@ export default function PatchesPage({
               <h4 className="text-lg font-black text-rose-600 leading-none">
                 {lang === 'th' ? `${totalFailedPatches} รายการ` : `${totalFailedPatches} Patches`}
               </h4>
-              <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
-                {lang === 'th' ? 'การอัปเดตล้มเหลว' : 'Failed'}
-              </p>
             </div>
           </div>
 
-          {/* Card 5: Devices Available */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
+          {/* Card 5: Devices Pending */}
+          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[64px]">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-                {lang === 'th' ? 'อุปกรณ์ค้างติดตั้ง' : 'Devices Pending'}
+                {lang === 'th' ? 'อุปกรณ์ค้างติดตั้ง' : 'DEVICES PENDING'}
               </span>
               <Monitor className="h-3.5 w-3.5 text-indigo-500" />
             </div>
@@ -320,9 +286,6 @@ export default function PatchesPage({
               <h4 className="text-lg font-black text-slate-800 leading-none">
                 {lang === 'th' ? `${uniqueDevicesNeedingUpdates} เครื่อง` : `${uniqueDevicesNeedingUpdates} Devices`}
               </h4>
-              <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
-                {lang === 'th' ? 'มีแพตช์ค้างอัปเดต' : 'Devices Available'}
-              </p>
             </div>
           </div>
         </div>
@@ -429,14 +392,11 @@ export default function PatchesPage({
 
         {/* SECTION 3: SYSTEM PENDING PATCHES DETAILS TABLE */}
         <div className="space-y-1.5 flex-1 flex flex-col justify-end">
-          <div className="flex flex-col ">
+          <div className="flex flex-col mb-1">
             <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
               <Server className="h-3.5 w-3.5 text-blue-500" />
               <span>{lang === 'th' ? '3. รายละเอียดแพตช์ระบบปฏิบัติการที่ค้างการติดตั้ง (Pending OS Patches Details)' : '3. PENDING OS PATCHES DETAILS'}</span>
             </h3>
-            <p className="text-[7px] text-slate-400 font-bold uppercase ml-5 tracking-wide leading-none mt-0.5">
-              Top pending patches across all devices
-            </p>
           </div>
           
           <div className="border border-slate-100 rounded-lg overflow-hidden bg-white/70 backdrop-blur-xs shadow-xs flex-1">
@@ -486,7 +446,7 @@ export default function PatchesPage({
 
       {/* Page Footer */}
       <div className="page-footer text-[9px] text-slate-400 font-semibold border-t border-slate-100/60 pt-3 mt-3  flex justify-between">
-        <span>Generated from Atera API v3 | Powered by Power BI Report Builder | Confidential</span>
+        <span>Generated from Atera API v3 | Powered by Ally Assist</span>
         <span>
           {lang === 'th' ? `หน้า ${pageNumber} จาก ${totalPages}` : `Page ${pageNumber} of ${totalPages}`}
         </span>
