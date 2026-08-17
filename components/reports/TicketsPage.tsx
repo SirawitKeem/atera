@@ -47,13 +47,22 @@ export default function TicketsPage({
     const directDev = ticket.DeviceName || ticket.deviceName || ticket.Device || ticket.device;
     if (directDev) return directDev;
 
-    const title = String(ticket.TicketTitle || ticket.title || '').toLowerCase();
-    const comment = String(ticket.FirstComment || ticket.description || '').toLowerCase();
+    const title = String(ticket.TicketTitle || ticket.title || '');
+    const comment = String(ticket.FirstComment || ticket.description || '');
+
+    // 1. Try to extract device name from text using regex like "Device: NAME" or "Device: [NAME]"
+    const deviceRegex = /device\s*:\s*([a-za-z0-9-_]+)/i;
+    const titleMatch = title.match(deviceRegex);
+    if (titleMatch && titleMatch[1]) return titleMatch[1];
     
+    const commentMatch = comment.match(deviceRegex);
+    if (commentMatch && commentMatch[1]) return commentMatch[1];
+
+    // 2. Loop through agents list to see if any agent name is mentioned
     for (const agent of agents) {
       const mName = String(agent.MachineName || agent.AgentName || '').toLowerCase();
       if (!mName) continue;
-      if (title.includes(mName) || comment.includes(mName)) {
+      if (title.toLowerCase().includes(mName) || comment.toLowerCase().includes(mName)) {
         return agent.MachineName || agent.AgentName;
       }
     }
@@ -105,7 +114,8 @@ export default function TicketsPage({
             </div>
             <div>
               <h4 className="text-lg font-black text-slate-800 leading-none">
-                {lang === 'th' ? `${totalTickets} ตั๋ว` : `${totalTickets} Tickets`}
+                <span className="text-blue-700">{totalTickets}</span>{' '}
+                <span className="text-[12px] font-bold text-slate-500">{lang === 'th' ? 'ตั๋ว' : 'Tickets'}</span>
               </h4>
               <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
                 {lang === 'th' ? 'กรณีที่บันทึกทั้งหมด' : 'Total Logged Cases'}
@@ -119,11 +129,12 @@ export default function TicketsPage({
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
                 {t.openTickets}
               </span>
-              <AlertTriangle className="h-3.5 w-3.5 text-slate-500" />
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
             </div>
             <div>
               <h4 className="text-lg font-black text-slate-800 leading-none">
-                {lang === 'th' ? `${openTickets} ตั๋ว` : `${openTickets} Tickets`}
+                <span className="text-amber-700">{openTickets}</span>{' '}
+                <span className="text-[12px] font-bold text-slate-500">{lang === 'th' ? 'ตั๋ว' : 'Tickets'}</span>
               </h4>
               <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
                 {lang === 'th' ? 'กำลังรอการแก้ไข' : 'Pending Resolution'}
@@ -137,11 +148,12 @@ export default function TicketsPage({
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
                 {lang === 'th' ? 'แก้ไขแล้ว' : 'Resolved'}
               </span>
-              <CheckCircle className="h-3.5 w-3.5 text-slate-500" />
+              <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
             </div>
             <div>
               <h4 className="text-lg font-black text-slate-800 leading-none">
-                {lang === 'th' ? `${resolvedTickets} ตั๋ว` : `${resolvedTickets} Tickets`}
+                <span className="text-emerald-700">{resolvedTickets}</span>{' '}
+                <span className="text-[12px] font-bold text-slate-500">{lang === 'th' ? 'ตั๋ว' : 'Tickets'}</span>
               </h4>
               <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
                 {lang === 'th' ? 'ปิดและเสร็จสิ้น' : 'Closed & Completed'}
@@ -155,10 +167,10 @@ export default function TicketsPage({
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
                 {t.slaCompliance}
               </span>
-              <Award className="h-3.5 w-3.5 text-emerald-500" />
+              <Award className={`h-3.5 w-3.5 ${slaCompliancePercent >= 90 ? 'text-emerald-500' : 'text-rose-500'}`} />
             </div>
             <div>
-              <h4 className="text-lg font-black text-emerald-600 leading-none">{slaCompliancePercent}%</h4>
+              <h4 className={`text-lg font-black ${slaCompliancePercent >= 90 ? 'text-emerald-700' : 'text-rose-700'} leading-none`}>{slaCompliancePercent}%</h4>
               <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
                 {lang === 'th' ? 'บรรลุเป้าหมาย > 90%' : 'Target > 90% Met'}
               </p>

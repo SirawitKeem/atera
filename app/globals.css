@@ -16,6 +16,28 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-brand: var(--report-brand);
+  --color-brand-soft: var(--report-brand-soft);
+  --color-report-canvas: var(--report-canvas);
+  --color-report-surface: var(--report-surface);
+  --color-report-ink: var(--report-ink);
+  --color-report-heading: var(--report-heading);
+  --color-report-muted: var(--report-muted);
+  --color-report-table-header: var(--report-table-header);
+  --color-severity-critical: var(--severity-critical);
+  --color-severity-important: var(--severity-important);
+  --color-severity-moderate: var(--severity-moderate);
+  --color-status-online: var(--status-online);
+  --color-status-offline: var(--status-offline);
+  --text-report-caption: var(--report-font-caption);
+  --text-report-label: var(--report-font-label);
+  --text-report-body: var(--report-font-body);
+  --text-report-heading: var(--report-font-heading);
+  --text-report-title: var(--report-font-title);
+  --spacing-report-1: var(--report-space-1);
+  --spacing-report-2: var(--report-space-2);
+  --spacing-report-3: var(--report-space-3);
+  --spacing-report-4: var(--report-space-4);
 }
 
 :root {
@@ -32,6 +54,35 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+
+  /* Report design tokens: use these instead of inline color or size values. */
+  --report-brand: #E20074;
+  --report-brand-soft: #FFEAF2;
+  --report-canvas: #f4f4f5;
+  --report-surface: #ffffff;
+  --report-ink: #09090b;
+  --report-heading: #0F172A;
+  --report-muted: #71717a;
+  --report-border: #e4e4e7;
+  --report-table-header: #0f4c81;
+  --report-grid-dot: rgba(226, 232, 240, 0.4);
+  --severity-critical: #e11d48;
+  --severity-important: #d97706;
+  --severity-moderate: #2563eb;
+  --status-online: #059669;
+  --status-offline: #64748b;
+
+  --report-font-caption: 0.5rem;
+  --report-font-label: 0.625rem;
+  --report-font-body: 0.75rem;
+  --report-font-heading: 1.125rem;
+  --report-font-title: 1.75rem;
+
+  --report-space-1: 0.25rem;
+  --report-space-2: 0.5rem;
+  --report-space-3: 0.75rem;
+  --report-space-4: 1rem;
+  --shadow-report-page: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 body {
@@ -48,7 +99,7 @@ body {
   align-items: center;
   padding: 2rem 0;
   gap: 2rem;
-  background-color: #f4f4f5; /* zinc-100 screen background */
+  background-color: var(--report-canvas);
 }
 
 .a4-page {
@@ -56,12 +107,12 @@ body {
   width: 210mm;
   height: 297mm;
   padding: 20mm;
-  background-color: #ffffff;
-  background-image: radial-gradient(rgba(226, 232, 240, 0.4) 1px, transparent 1px);
+  background-color: var(--report-surface);
+  background-image: radial-gradient(var(--report-grid-dot) 1px, transparent 1px);
   background-size: 14px 14px;
-  color: #09090b;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e4e4e7; /* zinc-200 */
+  color: var(--report-ink);
+  box-shadow: var(--shadow-report-page);
+  border: 1px solid var(--report-border);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -75,8 +126,8 @@ body {
   justify-content: space-between;
   align-items: center;
   font-size: 10px;
-  color: #71717a; /* zinc-500 */
-  border-bottom: 1px solid #e4e4e7;
+  color: var(--report-muted);
+  border-bottom: 1px solid var(--report-border);
   padding-bottom: 6px;
   margin-bottom: 20px;
   height: 20px;
@@ -94,8 +145,8 @@ body {
   justify-content: space-between;
   align-items: center;
   font-size: 10px;
-  color: #71717a;
-  border-top: 1px solid #e4e4e7;
+  color: var(--report-muted);
+  border-top: 1px solid var(--report-border);
   padding-top: 6px;
   margin-top: 20px;
   height: 20px;
@@ -119,7 +170,7 @@ body {
     height: 297mm;
     margin: 0 !important;
     padding: 0 !important;
-    background: #ffffff !important;
+    background: var(--report-surface) !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -140,7 +191,7 @@ body {
     padding: 0 !important;
     margin: 0 !important;
     gap: 0 !important;
-    background-color: #ffffff !important;
+    background-color: var(--report-surface) !important;
   }
 
   .a4-page {
@@ -173,3 +224,49 @@ body {
   size: A4 portrait;
   margin: 0;
 }
+
+/* Shared report UI primitives */
+.report-stat-card {
+  display: flex;
+  min-height: 4.625rem;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid var(--report-border);
+  border-radius: 0.75rem;
+  padding: var(--report-space-2);
+  background: var(--report-surface);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+}
+.report-stat-card__header { display: flex; align-items: center; justify-content: space-between; gap: var(--report-space-2); }
+.report-stat-card__label { color: var(--report-muted); font-size: var(--report-font-caption); font-weight: 800; letter-spacing: 0.05em; line-height: 1; text-transform: uppercase; }
+.report-stat-card__icon { display: inline-flex; color: var(--report-heading); }
+.report-stat-card__icon > svg { width: 0.875rem; height: 0.875rem; }
+.report-stat-card__value { color: var(--report-heading); font-size: var(--report-font-heading); font-weight: 900; line-height: 1; }
+.report-stat-card__detail { margin: var(--report-space-1) 0 0; color: var(--report-muted); font-size: var(--report-font-caption); font-weight: 700; text-transform: uppercase; }
+.report-stat-card--critical .report-stat-card__icon { color: var(--severity-critical); }
+.report-stat-card--important .report-stat-card__icon { color: var(--severity-important); }
+.report-stat-card--moderate .report-stat-card__icon { color: var(--severity-moderate); }
+.report-stat-card--online .report-stat-card__icon { color: var(--status-online); }
+.report-stat-card--offline .report-stat-card__icon { color: var(--status-offline); }
+
+.report-severity-badge { display: inline-flex; align-items: center; border: 1px solid currentColor; border-radius: 9999px; padding: 0.125rem 0.5rem; font-size: var(--report-font-caption); font-weight: 800; line-height: 1; text-transform: uppercase; }
+.report-severity-badge--critical { color: var(--severity-critical); }
+.report-severity-badge--important { color: var(--severity-important); }
+.report-severity-badge--moderate { color: var(--severity-moderate); }
+.report-severity-badge--unknown { color: var(--report-muted); }
+
+.report-table { flex: 1; overflow: hidden; border: 1px solid var(--report-border); border-radius: 0.5rem; background: var(--report-surface); }
+.report-table__table { width: 100%; border-collapse: collapse; color: var(--report-ink); font-size: var(--report-font-body); text-align: left; }
+.report-table__table thead { background: var(--report-table-header); color: var(--report-surface); font-size: var(--report-font-caption); font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+
+.report-page-header { position: relative; display: flex; justify-content: space-between; align-items: flex-start; overflow: hidden; border-bottom: 1px solid var(--report-border); padding-bottom: var(--report-space-4); margin-bottom: 1.5rem; }
+.report-page-header__decoration { position: absolute; top: 0; right: 0; z-index: 0; width: 50%; height: 100%; color: var(--report-brand); opacity: 0.1; pointer-events: none; }
+.report-page-header__title-group, .report-page-header__meta { position: relative; z-index: 1; }
+.report-page-header__title-group { display: grid; gap: var(--report-space-2); }
+.report-page-header__logo { width: auto; height: 1.5rem; object-fit: contain; }
+.report-page-header__title { margin: var(--report-space-2) 0 0; color: var(--report-heading); font-size: var(--report-font-title); font-weight: 800; letter-spacing: -0.025em; line-height: 1; }
+.report-page-header__subtitle { margin: var(--report-space-2) 0 0; color: var(--report-muted); font-size: var(--report-font-body); font-weight: 500; }
+.report-page-header__meta { display: flex; flex-direction: column; align-items: flex-end; gap: var(--report-space-2); }
+.report-page-header__badge { border-radius: 9999px; padding: 0.25rem 0.625rem; color: var(--report-brand); background: var(--report-brand-soft); font-size: var(--report-font-label); font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+.report-page-header__date { display: inline-flex; align-items: center; gap: var(--report-space-1); border: 1px solid var(--report-border); border-radius: 0.5rem; padding: 0.25rem 0.625rem; color: var(--report-heading); background: var(--report-surface); font-size: var(--report-font-label); font-weight: 600; }
+.report-page-header__date > svg { width: 0.875rem; height: 0.875rem; color: var(--report-muted); }

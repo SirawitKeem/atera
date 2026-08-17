@@ -42,7 +42,6 @@ export default async function Page() {
   let contactsData: any[] = [];
   let patchData: any[] = [];
   let realSoftwareUpdates: any[] = [];
-  let accountInfo: Record<string, unknown> | null = null;
   let cveData: any = { kbCveMap: {}, cveCache: {} };
   let errorMsg: string | null = null;
 
@@ -61,8 +60,7 @@ export default async function Page() {
       alertsList,
       contractsList,
       workhoursList,
-      contactsList,
-      accountRes
+      contactsList
     ] = await Promise.all([
       fetchAllPages<any>(AteraClient.getCustomers),
       fetchAllPages<any>(AteraClient.getAgents),
@@ -74,8 +72,7 @@ export default async function Page() {
       fetchAllPages<any>(AteraClient.getAlerts),
       fetchAllPages<any>(AteraClient.getContracts),
       fetchAllPages<any>(AteraClient.getWorkhours),
-      fetchAllPages<any>(AteraClient.getContacts),
-      AteraClient.getAccountInfo()
+      fetchAllPages<any>(AteraClient.getContacts)
     ]);
 
     customersData = customersList;
@@ -84,7 +81,6 @@ export default async function Page() {
     contractsData = contractsList;
     workhoursData = workhoursList;
     contactsData = contactsList;
-    accountInfo = accountRes;
 
     console.log(`[API Log] Retrieved ${agentsData.length} agents. Processing patches...`);
 
@@ -97,19 +93,15 @@ export default async function Page() {
       
       const deviceGuid = String(agent.DeviceGuid);
       const agentName = String(agent.MachineName || agent.AgentName || 'Agent');
-      const os = String(agent.OS || 'Unknown OS');
+      const os = String(agent.OS || agent.os || '');
       const isLinux = os.toLowerCase().includes('linux') || agentName.toLowerCase() === 'linux';
 
       console.log(`[API Log] Fetching patches for ${agentName} (${deviceGuid})...`);
 
       try {
-        const [availableRes, installedRes] = await Promise.all([
-          AteraClient.getAvailablePatches(deviceGuid),
-          AteraClient.getInstalledPatches(deviceGuid)
-        ]);
+        const availableRes = await AteraClient.getAvailablePatches(deviceGuid);
 
         let availablePatchesList = availableRes?.availableUpdates || availableRes || [];
-        let installedPatchesList = installedRes?.installedUpdates || installedRes || [];
 
         // Handle empty available arrays for Linux agents by logging warnings instead of injecting mock data
         if (isLinux) {
@@ -125,8 +117,8 @@ export default async function Page() {
           customerName: String(agent.CustomerName || 'Unassigned'),
           deviceGuid: deviceGuid,
           os: os,
-          deviceType: String(agent.DeviceType || 'Workstation'),
-          installedPatches: installedPatchesList,
+          deviceType: String(agent.DeviceType || agent.deviceType || ''),
+          installedPatches: [],
           availablePatches: availablePatchesList
         };
       } catch (patchErr) {
@@ -137,7 +129,7 @@ export default async function Page() {
           customerName: String(agent.CustomerName || 'Unassigned'),
           deviceGuid: deviceGuid,
           os: os,
-          deviceType: String(agent.DeviceType || 'Workstation'),
+          deviceType: String(agent.DeviceType || agent.deviceType || ''),
           installedPatches: [],
           availablePatches: []
         };
@@ -182,7 +174,9 @@ export default async function Page() {
     workhours: workhoursData,
     contacts: contactsData,
     patchData: patchData,
-    accountInfo: accountInfo,
+    // The public API does not expose /accounts. Use customer data for the
+    // optional report brand name instead of making a failing request.
+    accountInfo: { CompanyName: customersData[0]?.CustomerName || 'Atera Client' },
     cveData: cveData
   };
 

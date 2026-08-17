@@ -43,37 +43,34 @@ export default function HealthPage({
   const onlineRatio = totalDevices > 0 ? Math.round((onlineCount / totalDevices) * 100) : 100;
 
   // Real capacity metrics derived from agent fields
-  const deviceHealthList = agents.map((a, idx) => {
-    const name = a.MachineName || a.name || 'Device';
-    const os = a.OS || a.os || 'Windows';
-
-    const cpu = 0;
-    const ram = a.Memory ? Math.round(((idx * 7 + 35) % 45) + 30) : 0;
-    const diskTotal = (a.HardwareDisks || []).reduce((s: number, d: any) => s + (d.Total || 0), 0);
-    const diskUsed = (a.HardwareDisks || []).reduce((s: number, d: any) => s + (d.Used || 0), 0);
-    const disk = diskTotal > 0 ? Math.round((diskUsed / diskTotal) * 100) : Math.round(((idx * 11 + 20) % 50) + 20);
-
-    let status = 'Healthy';
-    if (ram > 85 || disk < 15) status = 'Warning';
+  const deviceHealthList = agents.map((a) => {
+    const name = a.MachineName || a.name || 'Not reported';
+    const os = a.OS || a.os || '';
+    const disks = Array.isArray(a.HardwareDisks) ? a.HardwareDisks : [];
+    const diskTotal = disks.reduce((sum: number, disk: any) => sum + Number(disk.Total || 0), 0);
+    const diskUsed = disks.reduce((sum: number, disk: any) => sum + Number(disk.Used || 0), 0);
+    const disk = diskTotal > 0 && Number.isFinite(diskUsed)
+      ? Math.round(((diskTotal - diskUsed) / diskTotal) * 100)
+      : null;
 
     return {
       name,
       os,
       deviceType: a.DeviceType || a.deviceType || '',
       osType: a.OSType || a.osType || '',
-      cpu,
-      ram,
+      // No verified CPU/RAM utilisation field is mapped by this app.
+      cpu: null,
+      ram: null,
       disk,
-      status
+      status: disk === null ? 'No data' : disk < 15 ? 'Warning' : 'Healthy'
     };
   });
 
-  // KPI Calculations
-  const ramHealthyCount = deviceHealthList.filter(d => d.ram <= 85).length;
-  const diskHealthyCount = deviceHealthList.filter(d => d.disk >= 15).length;
-
-  const ramHealthPercent = totalDevices > 0 ? Math.round((ramHealthyCount / totalDevices) * 100) : 100;
-  const diskHealthPercent = totalDevices > 0 ? Math.round((diskHealthyCount / totalDevices) * 100) : 100;
+  // KPI calculations use only metrics returned by the API.
+  const ramHealthPercent: number | null = null;
+  const diskReportedCount = deviceHealthList.filter(d => d.disk !== null).length;
+  const diskHealthyCount = deviceHealthList.filter(d => d.disk !== null && d.disk >= 15).length;
+  const diskHealthPercent = diskReportedCount > 0 ? Math.round((diskHealthyCount / diskReportedCount) * 100) : null;
   const healthyHardwareCount = deviceHealthList.filter(d => d.status === 'Healthy').length;
 
 
@@ -109,7 +106,7 @@ export default function HealthPage({
               <Cpu className="h-3.5 w-3.5 text-blue-500" />
             </div>
             <div>
-              <h4 className="text-lg font-black text-slate-800 leading-none">{ramHealthPercent}%</h4>
+              <h4 className="text-lg font-black text-slate-800 leading-none">{ramHealthPercent === null ? 'No data' : String(ramHealthPercent) + '%'}</h4>
               <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
                 {lang === 'th' ? 'ภาระโหลด RAM <= 85%' : 'RAM load <= 85%'}
               </p>
@@ -125,7 +122,7 @@ export default function HealthPage({
               <Layers className="h-3.5 w-3.5 text-indigo-500" />
             </div>
             <div>
-              <h4 className="text-lg font-black text-slate-800 leading-none">{diskHealthPercent}%</h4>
+              <h4 className="text-lg font-black text-slate-800 leading-none">{diskHealthPercent === null ? 'No data' : String(diskHealthPercent) + '%'}</h4>
               <p className="text-[7px] text-slate-400 font-bold uppercase mt-1">
                 {lang === 'th' ? 'พื้นที่ดิสก์ว่าง >= 15%' : 'Disk free >= 15%'}
               </p>
@@ -157,9 +154,9 @@ export default function HealthPage({
             <AlertTriangle className="h-4 w-4 text-amber-500" /> {lang === 'th' ? '2. บันทึกสัญญาณเตือนทรัพยากรสูง (High Resource Warnings Log)' : '2. HIGH RESOURCE WARNINGS LOG'}
           </h4>
           <div className="flex-1 flex flex-col justify-center space-y-2 overflow-hidden">
-            {deviceHealthList.filter(d => d.ram > 85 || d.disk < 15).slice(0, 3).map((d, i) => {
+            {deviceHealthList.filter(dev => (dev.ram !== null && dev.ram > 85) || (dev.disk !== null && dev.disk < 15)).slice(0, 3).map((d, i) => {
               const name = d.name;
-              const warningType = d.ram > 85 ? (lang === 'th' ? `RAM สูง: ${d.ram}%` : `High RAM: ${d.ram}%`) : (lang === 'th' ? `ดิสก์เหลือน้อย: ${d.disk}%` : `Low Disk Free: ${d.disk}%`);
+              const warningType = (d.disk !== null && d.disk < 15) ? `Low Disk Free: ${d.disk}%` : 'No data';
               return (
                 <div key={i} className="flex items-center justify-between p-2 bg-slate-50 border border-slate-100 rounded-lg text-[9px]">
                   <div className="flex items-center gap-2">
@@ -175,7 +172,7 @@ export default function HealthPage({
                 </div>
               );
             })}
-            {deviceHealthList.filter(d => d.ram > 85 || d.disk < 15).length === 0 && (
+            {deviceHealthList.filter(d => d.ram !== null && d.ram > 85 || d.disk !== null && d.disk < 15).length === 0 && (
               <div className="text-center py-6 text-slate-400 font-bold text-[9.5px]">
                 {lang === 'th' ? '✓ ไม่พบปัญหาอุปกรณ์ใช้ทรัพยากรสูง' : '✓ No high resource usage detected'}
               </div>
@@ -212,9 +209,9 @@ export default function HealthPage({
                         <span className="truncate max-w-[120px]">{d.name}</span>
                       </td>
                       <td className="px-4 py-2 text-slate-400 truncate max-w-[120px]">{d.os}</td>
-                      <td className="px-4 py-2 text-center font-mono">{d.ram}%</td>
-                      <td className="px-4 py-2 text-center font-mono">{d.ram}%</td>
-                      <td className="px-4 py-2 text-center font-mono">{d.disk}%</td>
+                      <td className="px-4 py-2 text-center font-mono">{d.ram === null ? 'No data' : String(d.ram) + '%'}</td>
+                      <td className="px-4 py-2 text-center font-mono">{d.ram === null ? 'No data' : String(d.ram) + '%'}</td>
+                      <td className="px-4 py-2 text-center font-mono">{d.disk === null ? 'No data' : String(d.disk) + '%'}</td>
                       <td className="px-4 py-2 text-right">
                         <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[8.5px] font-extrabold border ${statusColor}`}>
                           {d.status === 'Healthy' ? (lang === 'th' ? 'ปกติ' : 'Healthy') : 

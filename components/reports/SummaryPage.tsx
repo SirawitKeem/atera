@@ -16,6 +16,7 @@ import {
 import ReportHeader from './ReportHeader';
 import { translations } from '@/lib/translations';
 import DeviceTypeIcon from './DeviceTypeIcon';
+import { StatCard } from '@/components/ui/StatCard';
 
 interface SummaryPageProps {
   pageNumber: number;
@@ -107,59 +108,13 @@ export default function SummaryPage({
 
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-2">
 
-        {/* SECTION 1: KPI CARDS (4 Cards: Customers, Devices, Alerts, Tickets) */}
-        <div className="grid grid-cols-4 gap-3 ">
-          
-          {/* Card 1: Customers */}
-          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs">
-            <div className="flex items-start justify-between">
-              <div className="flex flex-col flex-1">
-                <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider mb-1">{lang === 'th' ? 'ลูกค้า' : 'Customers'}</span>
-                <h3 className="text-3xl font-black text-slate-900 leading-none">{totalCustomers}</h3>
-                <p className="text-[10px] text-slate-500 font-medium mt-1">{t.totalCustomers}</p>
-              </div>
-              <Users2 className="h-8 w-8 text-blue-500 flex-shrink-0" strokeWidth={1.5} />
-            </div>
-          </div>
-
-          {/* Card 2: Devices */}
-          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs">
-            <div className="flex items-start justify-between">
-              <div className="flex flex-col flex-1">
-                <span className="text-[11px] font-bold text-blue-500 uppercase tracking-wider mb-1">{lang === 'th' ? 'อุปกรณ์' : 'Devices'}</span>
-                <h3 className="text-3xl font-black text-slate-900 leading-none">{totalDevices.toLocaleString()}</h3>
-                <p className="text-[10px] text-slate-500 font-medium mt-1">{t.monitoredDevices}</p>
-              </div>
-              <Monitor className="h-8 w-8 text-blue-500 flex-shrink-0" strokeWidth={1.5} />
-            </div>
-          </div>
-
-          {/* Card 3: Alerts */}
-          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs">
-            <div className="flex items-start justify-between">
-              <div className="flex flex-col flex-1">
-                <span className="text-[11px] font-bold text-orange-500 uppercase tracking-wider mb-1">{lang === 'th' ? 'การแจ้งเตือน' : 'Alerts'}</span>
-                <h3 className="text-3xl font-black text-slate-900 leading-none">{alerts.length}</h3>
-                <p className="text-[10px] text-slate-500 font-medium mt-1">{t.activeAlerts}</p>
-              </div>
-              <Bell className="h-8 w-8 text-orange-500 flex-shrink-0" strokeWidth={1.5} />
-            </div>
-          </div>
-
-          {/* Card 4: Tickets */}
-          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs">
-            <div className="flex items-start justify-between">
-              <div className="flex flex-col flex-1">
-                <span className="text-[11px] font-bold text-emerald-500 uppercase tracking-wider mb-1">{lang === 'th' ? 'ตั๋วงาน' : 'Tickets'}</span>
-                <h3 className="text-3xl font-black text-slate-900 leading-none">{totalTickets}</h3>
-                <p className="text-[10px] text-slate-500 font-medium mt-1">{t.totalTickets}</p>
-              </div>
-              <Clipboard className="h-8 w-8 text-emerald-500 flex-shrink-0" strokeWidth={1.5} />
-            </div>
-          </div>
-
+        {/* SECTION 1: KPI CARDS */}
+        <div className="grid grid-cols-4 gap-3">
+          <StatCard label="Customers" value={totalCustomers} detail={t.totalCustomers} icon={<Users2 />} tone="moderate" />
+          <StatCard label="Devices" value={totalDevices.toLocaleString()} detail={t.monitoredDevices} icon={<Monitor />} tone="moderate" />
+          <StatCard label="Alerts" value={alerts.length} detail={t.activeAlerts} icon={<Bell />} tone="important" />
+          <StatCard label="Tickets" value={totalTickets} detail={t.totalTickets} icon={<Clipboard />} tone="online" />
         </div>
-
         {/* SECTION 2: SERVICE DESK & MONITORING SUMMARY (Side-by-side) */}
         <div className="grid grid-cols-2 gap-4 ">
           

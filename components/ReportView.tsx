@@ -10,7 +10,6 @@ import PatchesPage from './reports/PatchesPage';
 import CVEPage from './reports/CVEPage';
 import AlertsPage from './reports/AlertsPage';
 import TicketsPage from './reports/TicketsPage';
-import RiskScorecardPage from './reports/RiskScorecardPage';
 
 interface ReportViewProps {
   data: {
@@ -33,7 +32,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
   const { customers, agents, tickets, alerts: rawAlerts, contracts, workhours, contacts, patchData, cveData } = data;
 
   // ===== TOTAL PAGES CONSTANT =====
-  const totalPages = 8;
+  const totalPages = 7;
 
   // ===== DATE RANGE PICKER STATE (default: 30 days back from today) =====
   const today = new Date();
@@ -54,8 +53,8 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
   // Selected step for Settings Wizard
   const [wizardStep, setWizardStep] = useState(1);
 
-  // Active language state ('th' or 'en')
-  const [language, setLanguage] = useState<'th' | 'en'>('th');
+  // Reports are English-only. The wider type remains for legacy settings.
+  const [language, setLanguage] = useState<'th' | 'en'>('en');
 
   // Scroll visibility for the floating header bar
   const [showHeader, setShowHeader] = useState(true);
@@ -75,9 +74,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         if (parsed.companyName) setCompanyName(parsed.companyName);
         if (parsed.startDate) setStartDate(parsed.startDate);
         if (parsed.endDate) setEndDate(parsed.endDate);
-        if (parsed.displayLanguage && (parsed.displayLanguage === 'th' || parsed.displayLanguage === 'en')) {
-          setLanguage(parsed.displayLanguage);
-        }
+        setLanguage('en');
       } catch (e) {
         console.error('Failed to load saved report settings', e);
       }
@@ -287,9 +284,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
           setCompanyName(config.companyName);
           setReportTitle(config.reportTitle);
           setReportSubtitle(config.reportSubtitle);
-          if (config.displayLanguage) {
-            setLanguage(config.displayLanguage);
-          }
+          setLanguage('en');
         }}
       />
 
@@ -322,7 +317,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         resolvedTickets={resolvedTickets}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
-        lang={language}
+        lang="en"
         companyName={companyName}
       />
 
@@ -335,7 +330,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         contacts={contacts}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
-        lang={language}
+        lang="en"
         companyName={companyName}
       />
 
@@ -347,7 +342,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         reportPeriod={reportPeriod}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
-        lang={language}
+        lang="en"
         companyName={companyName}
       />
 
@@ -360,7 +355,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         reportPeriod={reportPeriod}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
-        lang={language}
+        lang="en"
         companyName={companyName}
       />
 
@@ -372,7 +367,7 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         warningAlerts={warningAlerts}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
-        lang={language}
+        lang="en"
         companyName={companyName}
       />
 
@@ -386,28 +381,10 @@ export default function ReportView({ data, isMock, errorMsg }: ReportViewProps) 
         criticalTickets={criticalTickets}
         dateRangeDisplay={dateRangeDisplay}
         totalPages={totalPages}
-        lang={language}
+        lang="en"
         companyName={companyName}
         agents={agents}
       />
-
-      {/* PAGE 8: SECURITY & VULNERABILITY ASSESSMENT */}
-      <RiskScorecardPage 
-        pageNumber={8}
-        customers={customers}
-        agents={agents}
-        alerts={alerts}
-        tickets={filteredTickets}
-        patchData={patchData}
-        cveData={cveData}
-        dateRangeDisplay={dateRangeDisplay}
-        totalPages={totalPages}
-        lang={language}
-        companyName={companyName}
-      />
-
-
-
     </div>
   );
 }

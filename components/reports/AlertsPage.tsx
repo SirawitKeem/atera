@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import ReportHeader from './ReportHeader';
 import { translations } from '@/lib/translations';
+import { SeverityBadge } from '@/components/ui/SeverityBadge';
+import { StatCard } from '@/components/ui/StatCard';
 
 interface AlertsPageProps {
   pageNumber: number;
@@ -35,24 +37,6 @@ export default function AlertsPage({
   companyName = 'Atera Client'
 }: AlertsPageProps) {
   const t = translations[lang as 'th' | 'en'] || translations.th;
-
-  // OS Icon / Severity helper
-  const getSeverityBadge = (severity: string) => {
-    let cls = 'bg-slate-50 text-slate-700 border-slate-200';
-    let display = severity;
-    if (severity.toLowerCase() === 'critical') {
-      cls = 'bg-rose-50 text-rose-800 border-rose-200/50 font-extrabold';
-      display = lang === 'th' ? 'วิกฤต' : 'Critical';
-    } else if (severity.toLowerCase() === 'warning') {
-      cls = 'bg-amber-50 text-amber-700 border-amber-200/50';
-      display = lang === 'th' ? 'เตือนภัย' : 'Warning';
-    }
-    return (
-      <span className={`inline-flex items-center rounded px-1.5 py-0.5 text-[8.5px] font-extrabold border uppercase ${cls}`}>
-        {display}
-      </span>
-    );
-  };
 
   const totalAlerts = alerts.length;
 
@@ -101,74 +85,40 @@ export default function AlertsPage({
       <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-3">
         
         {/* SECTION 1: SYSTEM ALERT KPI CARDS */}
-        <div className="grid grid-cols-4 gap-3 ">
-          {/* Total Active Alerts */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
-            <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-                {lang === 'th' ? 'ปริมาณการแจ้งเตือนทั้งหมด' : 'Total Alerts Volume'}
+        <div className="grid grid-cols-4 gap-3">
+          <StatCard
+            label="Total Alerts"
+            value={<span className="text-blue-700">{totalAlerts}</span>}
+            detail="Active notifications"
+            icon={<Bell />}
+            tone="moderate"
+          />
+          <StatCard
+            label="Critical Alerts"
+            value={<span className="text-rose-700">{criticalAlerts}</span>}
+            detail={`${critPercent}% of total volume`}
+            icon={<AlertTriangle />}
+            tone="critical"
+          />
+          <StatCard
+            label="Warning Alerts"
+            value={<span className="text-amber-700">{warningAlerts}</span>}
+            detail={`${warnPercent}% of total volume`}
+            icon={<ShieldAlert />}
+            tone="important"
+          />
+          <StatCard
+            label="System Status"
+            value={
+              <span className={criticalAlerts > 0 ? 'text-rose-700' : 'text-emerald-700'}>
+                {criticalAlerts > 0 ? 'Attention Required' : 'Stable'}
               </span>
-              <Bell className="h-3.5 w-3.5 text-blue-500" />
-            </div>
-            <div>
-              <h4 className="text-lg font-black text-slate-800 leading-none">{totalAlerts}</h4>
-              <p className="text-[7px] text-slate-400 font-bold mt-1 uppercase">
-                {lang === 'th' ? 'การแจ้งเตือนที่ใช้งานอยู่' : 'Active Notifications'}
-              </p>
-            </div>
-          </div>
-
-          {/* Critical Alerts */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
-            <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-                {lang === 'th' ? 'การแจ้งเตือนระดับวิกฤต' : 'Critical Alerts'}
-              </span>
-              <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
-            </div>
-            <div>
-              <h4 className="text-lg font-black text-rose-600 leading-none">{criticalAlerts}</h4>
-              <p className="text-[7px] text-slate-400 font-bold mt-1 uppercase">
-                {lang === 'th' ? `${critPercent}% ของปริมาณทั้งหมด` : `${critPercent}% of Total Volume`}
-              </p>
-            </div>
-          </div>
-
-          {/* Warning Alerts */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
-            <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-                {lang === 'th' ? 'การแจ้งเตือนระดับเตือนภัย' : 'Warning Alerts'}
-              </span>
-              <ShieldAlert className="h-3.5 w-3.5 text-amber-500" />
-            </div>
-            <div>
-              <h4 className="text-lg font-black text-amber-600 leading-none">{warningAlerts}</h4>
-              <p className="text-[7px] text-slate-400 font-bold mt-1 uppercase">
-                {lang === 'th' ? `${warnPercent}% ของปริมาณทั้งหมด` : `${warnPercent}% of Total Volume`}
-              </p>
-            </div>
-          </div>
-
-          {/* Network Health Standard */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[74px]">
-            <div className="flex items-center justify-between">
-              <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
-                {lang === 'th' ? 'สถานะระบบ' : 'System Status'}
-              </span>
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-            </div>
-            <div>
-              <h4 className="text-[13px] font-black text-emerald-600 leading-none">
-                {criticalAlerts > 0 ? (lang === 'th' ? 'ต้องดูแลรักษา' : 'ATTENTION REQ.') : (lang === 'th' ? 'ปกติ' : 'STABLE')}
-              </h4>
-              <p className="text-[7px] text-slate-400 font-bold mt-1 uppercase">
-                {lang === 'th' ? 'การตรวจสอบอัตโนมัติ' : 'Automated Monitoring'}
-              </p>
-            </div>
-          </div>
+            }
+            detail="Automated monitoring"
+            icon={<ShieldCheck />}
+            tone={criticalAlerts > 0 ? 'critical' : 'online'}
+          />
         </div>
-
         {/* SECTION 2: RECENT ALERTS DETAIL TABLE */}
         <div className="space-y-1.5 flex-1 flex flex-col justify-end">
           <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5 ">
@@ -187,10 +137,10 @@ export default function AlertsPage({
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-semibold bg-white/50">
                 {alerts.slice(0, 10).map((a, idx) => {
-                  const device = a.DeviceName || a.device || 'N/A';
-                  const customer = a.CustomerName || a.customer || 'Unassigned';
-                  const severity = a.Severity || a.severity || 'Warning';
-                  const msg = a.AlertMessage || a.Message || a.message || 'System Notification';
+                  const device = a.DeviceName || a.device || 'Not reported';
+                  const customer = a.CustomerName || a.customer || 'Not reported';
+                  const severity = a.Severity || a.severity || '';
+                  const msg = a.AlertMessage || a.Message || a.message || 'Not reported';
                   const created = a.Created || a.CreatedDate || a.created || 'N/A';
 
                   return (
@@ -198,7 +148,7 @@ export default function AlertsPage({
                       <td className="px-4 py-2 font-bold text-slate-800 truncate max-w-[100px]">{device}</td>
                       <td className="px-4 py-2 text-slate-500 truncate max-w-[120px]">{customer}</td>
                       <td className="px-4 py-2 text-center">
-                        {getSeverityBadge(severity)}
+                        <SeverityBadge severity={severity} />
                       </td>
                       <td className="px-4 py-2 text-slate-600 font-normal truncate max-w-[200px]" title={msg}>{msg}</td>
                       <td className="px-4 py-2 text-right font-mono text-slate-400 text-[9px]">{created.substring(0, 10)}</td>

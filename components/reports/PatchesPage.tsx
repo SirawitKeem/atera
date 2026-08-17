@@ -14,6 +14,7 @@ import {
 import ReportHeader from './ReportHeader';
 import DeviceTypeIcon from './DeviceTypeIcon';
 import { translations } from '@/lib/translations';
+import { getDevicePlatform, isServerDevice } from '@/lib/device-classification';
 
 interface PatchesPageProps {
   pageNumber: number;
@@ -66,8 +67,8 @@ export default function PatchesPage({
         missingPatchesList.push({
           deviceName: agent.agentName || 'Agent',
           customerName: agent.customerName || 'Unassigned',
-          deviceType: agent.deviceType || 'Workstation',
-          os: agent.os || 'Windows',
+          deviceType: agent.deviceType || '',
+          os: agent.os || '',
           kbId: patch.kbId || patch.KBID || patch.name || patch.Title || 'N/A',
           title: patch.name || patch.Title || 'Unknown Update',
           classification: patch.class || patch.PatchClassification || 'Other Updates'
@@ -91,9 +92,9 @@ export default function PatchesPage({
   const uniqueDevicesNeedingUpdates = Array.from(new Set(missingPatchesList.map(p => p.deviceName))).length;
 
   // Calculate missing patches counts per device type
-  const workstationMissingPatches = missingPatchesList.filter(p => !p.deviceType.toLowerCase().includes('server') && !p.os.toLowerCase().includes('linux')).length;
-  const serverMissingPatches = missingPatchesList.filter(p => p.deviceType.toLowerCase().includes('server') || p.os.toLowerCase().includes('server')).length;
-  const linuxMissingPatches = missingPatchesList.filter(p => p.os.toLowerCase().includes('linux') || p.os.toLowerCase().includes('ubuntu')).length;
+  const workstationMissingPatches = missingPatchesList.filter(p => !isServerDevice({ deviceType: p.deviceType }) && getDevicePlatform({ os: p.os }) !== 'linux').length;
+  const serverMissingPatches = missingPatchesList.filter(p => isServerDevice({ deviceType: p.deviceType })).length;
+  const linuxMissingPatches = missingPatchesList.filter(p => getDevicePlatform({ os: p.os }) === 'linux').length;
 
   // Group devices by number of pending patches and sort descending (Top 7)
   const topDevices = (patchData || [])
@@ -102,8 +103,8 @@ export default function PatchesPage({
       return {
         name: agent.agentName || 'Agent',
         customer: agent.customerName || 'Unassigned',
-        deviceType: agent.deviceType || 'Workstation',
-        os: agent.os || 'Windows',
+        deviceType: agent.deviceType || '',
+        os: agent.os || '',
         pendingCount
       };
     })
@@ -224,7 +225,8 @@ export default function PatchesPage({
             </div>
             <div>
               <h4 className="text-lg font-black text-slate-800 leading-none">
-                {lang === 'th' ? `${totalOSPatches} รายการ` : `${totalOSPatches} Patches`}
+                <span className="text-blue-700">{totalOSPatches}</span>{' '}
+                <span className="text-[12px] font-bold text-slate-500">{lang === 'th' ? 'รายการ' : 'Patches'}</span>
               </h4>
             </div>
           </div>
@@ -238,8 +240,9 @@ export default function PatchesPage({
               <CheckCircle className="h-3.5 w-3.5 text-emerald-500" />
             </div>
             <div>
-              <h4 className="text-lg font-black text-emerald-600 leading-none">
-                {lang === 'th' ? `${totalInstalledPatches} รายการ` : `${totalInstalledPatches} Patches`}
+              <h4 className="text-lg font-black text-slate-800 leading-none">
+                <span className="text-emerald-700">{totalInstalledPatches}</span>{' '}
+                <span className="text-[12px] font-bold text-slate-500">{lang === 'th' ? 'รายการ' : 'Patches'}</span>
               </h4>
             </div>
           </div>
@@ -253,8 +256,9 @@ export default function PatchesPage({
               <Activity className="h-3.5 w-3.5 text-amber-500" />
             </div>
             <div>
-              <h4 className="text-lg font-black text-amber-600 leading-none">
-                {lang === 'th' ? `${totalPendingPatches} รายการ` : `${totalPendingPatches} Patches`}
+              <h4 className="text-lg font-black text-slate-800 leading-none">
+                <span className="text-amber-700">{totalPendingPatches}</span>{' '}
+                <span className="text-[12px] font-bold text-slate-500">{lang === 'th' ? 'รายการ' : 'Patches'}</span>
               </h4>
             </div>
           </div>
@@ -268,8 +272,9 @@ export default function PatchesPage({
               <XCircle className="h-3.5 w-3.5 text-rose-500" />
             </div>
             <div>
-              <h4 className="text-lg font-black text-rose-600 leading-none">
-                {lang === 'th' ? `${totalFailedPatches} รายการ` : `${totalFailedPatches} Patches`}
+              <h4 className="text-lg font-black text-slate-800 leading-none">
+                <span className="text-rose-700">{totalFailedPatches}</span>{' '}
+                <span className="text-[12px] font-bold text-slate-500">{lang === 'th' ? 'รายการ' : 'Patches'}</span>
               </h4>
             </div>
           </div>
@@ -284,7 +289,8 @@ export default function PatchesPage({
             </div>
             <div>
               <h4 className="text-lg font-black text-slate-800 leading-none">
-                {lang === 'th' ? `${uniqueDevicesNeedingUpdates} เครื่อง` : `${uniqueDevicesNeedingUpdates} Devices`}
+                <span className="text-indigo-700">{uniqueDevicesNeedingUpdates}</span>{' '}
+                <span className="text-[12px] font-bold text-slate-500">{lang === 'th' ? 'เครื่อง' : 'Devices'}</span>
               </h4>
             </div>
           </div>

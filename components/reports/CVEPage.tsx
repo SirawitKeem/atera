@@ -81,8 +81,8 @@ export default function CVEPage({
     if (!available.length) return;
 
     const deviceName = String(agent.agentName || 'Agent');
-    const deviceType = String(agent.deviceType || 'Workstation');
-    const os = String(agent.os || 'Windows');
+    const deviceType = String(agent.deviceType || '');
+    const os = String(agent.os || '');
 
     available.forEach((patch: any) => {
       const kbId = String(patch.kbId || patch.KBID || '');
@@ -373,12 +373,11 @@ export default function CVEPage({
             <table className="min-w-full divide-y divide-slate-100 text-[9.5px] text-left">
               <thead className="bg-[#0f4c81] text-white font-bold uppercase tracking-wider text-[7px]">
                 <tr>
-                  <th className="px-3 py-2 w-[25%]">{lang === 'th' ? 'ชื่ออุปกรณ์' : 'DEVICE NAME'}</th>
-                  <th className="px-3 py-2 w-[20%]">{lang === 'th' ? 'ประเภทอุปกรณ์' : 'DEVICE TYPE'}</th>
-                  <th className="px-3 py-2 text-center w-[18%]">{lang === 'th' ? 'แพตช์ค้าง' : 'PENDING PATCHES'}</th>
+                  <th className="px-3 py-2 w-[30%]">{lang === 'th' ? 'ชื่ออุปกรณ์' : 'DEVICE NAME'}</th>
+                  <th className="px-3 py-2 w-[25%]">{lang === 'th' ? 'ประเภทอุปกรณ์' : 'DEVICE TYPE'}</th>
+                  <th className="px-3 py-2 text-center w-[20%]">{lang === 'th' ? 'แพตช์ค้าง' : 'PENDING PATCHES'}</th>
                   <th className="px-3 py-2 text-center w-[13%]">{lang === 'th' ? 'CVE ทั้งหมด' : 'TOTAL CVES'}</th>
                   <th className="px-3 py-2 text-center w-[12%]">{lang === 'th' ? 'ระดับวิกฤต' : 'CRITICAL CVES'}</th>
-                  <th className="px-3 py-2 text-center w-[12%]">{lang === 'th' ? 'ระดับสำคัญ' : 'IMPORTANT CVES'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-semibold bg-white/50">
@@ -397,20 +396,11 @@ export default function CVEPage({
                         <span className="text-slate-400 font-bold">-</span>
                       )}
                     </td>
-                    <td className="px-3 py-1.5 text-center">
-                      {dev.importantCves > 0 ? (
-                        <span className="inline-flex items-center justify-center font-black text-amber-700 bg-amber-50 border border-amber-250 rounded w-8 h-5 text-[8.5px]">
-                          {dev.importantCves}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 font-bold">-</span>
-                      )}
-                    </td>
                   </tr>
                 ))}
                 {vulnerableDevices.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400 font-bold text-[9px]">
+                    <td colSpan={5} className="px-4 py-8 text-center text-slate-400 font-bold text-[9px]">
                       {lang === 'th' ? '✓ ไม่พบอุปกรณ์ที่มีช่องโหว่ค้างอัปเดต' : '✓ No vulnerable devices found'}
                     </td>
                   </tr>

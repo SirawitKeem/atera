@@ -54,7 +54,7 @@ export default function SettingsWizardModal({
   initialCompanyName,
   initialReportTitle,
   initialReportSubtitle,
-  initialDisplayLanguage = 'th',
+  initialDisplayLanguage = 'en',
   initialStep = 1,
   onSave
 }: SettingsWizardModalProps) {
@@ -89,8 +89,8 @@ export default function SettingsWizardModal({
   const [senderName, setSenderName] = useState('Atera MSP Automated Report System');
   const [subject, setSubject] = useState('');
   const [attachPdf, setAttachPdf] = useState(true);
-  const [displayLanguage, setDisplayLanguage] = useState<'th' | 'en'>(initialDisplayLanguage);
-  const [emailLanguage, setEmailLanguage] = useState<'th' | 'en' | 'both'>('both');
+  const [displayLanguage, setDisplayLanguage] = useState<'th' | 'en'>('en');
+  const [emailLanguage, setEmailLanguage] = useState<'th' | 'en' | 'both'>('en');
 
   // Status & Feedback States
   const [isSendingTest, setIsSendingTest] = useState(false);
@@ -105,7 +105,7 @@ export default function SettingsWizardModal({
       setCompanyName(initialCompanyName);
       setReportTitle(initialReportTitle);
       setReportSubtitle(initialReportSubtitle);
-      setDisplayLanguage(initialDisplayLanguage);
+      setDisplayLanguage('en');
       setActiveTab(initialStep);
     }
   }, [isOpen, initialStartDate, initialEndDate, initialCompanyName, initialReportTitle, initialReportSubtitle, initialDisplayLanguage, initialStep]);
@@ -135,12 +135,8 @@ export default function SettingsWizardModal({
         if (parsed.endDate) setEndDate(parsed.endDate);
         if (typeof parsed.isAutoEnabled === 'boolean') setIsAutoEnabled(parsed.isAutoEnabled);
         if (typeof parsed.attachPdf === 'boolean') setAttachPdf(parsed.attachPdf);
-        if (parsed.displayLanguage && (parsed.displayLanguage === 'th' || parsed.displayLanguage === 'en')) {
-          setDisplayLanguage(parsed.displayLanguage);
-        }
-        if (parsed.emailLanguage && (parsed.emailLanguage === 'th' || parsed.emailLanguage === 'en' || parsed.emailLanguage === 'both')) {
-          setEmailLanguage(parsed.emailLanguage);
-        }
+        setDisplayLanguage('en');
+        setEmailLanguage('en');
       } catch (e) {
         console.error('Failed to parse saved email schedule config', e);
       }
