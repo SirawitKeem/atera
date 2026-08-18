@@ -11,7 +11,9 @@ import {
   HardDrive,
   Laptop,
   Server,
-  Wifi
+  Wifi,
+  ShieldCheck,
+  CheckCircle2
 } from 'lucide-react';
 import ReportHeader from './ReportHeader';
 import { translations } from '@/lib/translations';
@@ -88,6 +90,7 @@ export default function SummaryPage({
     .sort((a, b) => b[1] - a[1])
     .slice(0, 4);
   const totalDeviceCount = Math.max(agents.length, 1);
+  const criticalAlertsCount = alerts.filter(a => (a.Severity || a.severity || '').toLowerCase() === 'critical').length;
 
   return (
     <div 
@@ -106,7 +109,7 @@ export default function SummaryPage({
         lang={lang}
       />
 
-      <div className="page-content space-y-4 flex-1 flex flex-col justify-between overflow-hidden mt-2">
+      <div className="page-content space-y-5 flex-1 flex flex-col justify-start overflow-hidden mt-2">
 
         {/* SECTION 1: KPI CARDS */}
         <div className="grid grid-cols-4 gap-3">
@@ -116,10 +119,10 @@ export default function SummaryPage({
           <StatCard label="Tickets" value={totalTickets} detail={t.totalTickets} icon={<Clipboard />} tone="online" />
         </div>
         {/* SECTION 2: SERVICE DESK & MONITORING SUMMARY (Side-by-side) */}
-        <div className="grid grid-cols-2 gap-4 ">
+        <div className="grid grid-cols-2 gap-4">
           
           {/* Tickets Overview Card */}
-          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs h-[120px]">
+          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs h-[130px]">
             <div className="flex items-center justify-between border-b border-slate-50 pb-2 mb-2">
               <div className="flex items-center gap-2">
                 <Ticket className="h-4 w-4 text-emerald-500" />
@@ -151,7 +154,7 @@ export default function SummaryPage({
           </div>
 
           {/* Alerts Overview Card */}
-          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs h-[120px]">
+          <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs h-[130px]">
             <div className="flex items-center justify-between border-b border-slate-50 pb-2 mb-2">
               <div className="flex items-center gap-2">
                 <AlertOctagon className="h-4 w-4 text-orange-500" />
@@ -169,7 +172,7 @@ export default function SummaryPage({
                   {lang === 'th' ? 'วิกฤต' : 'Critical'}
                 </span>
                 <span className="text-lg font-black text-rose-600 leading-none">
-                  {alerts.filter(a => (a.Severity || a.severity || '').toLowerCase() === 'critical').length}
+                  {criticalAlertsCount}
                 </span>
               </div>
               <div className="flex flex-col justify-center border-x border-slate-100 px-2">
@@ -200,22 +203,27 @@ export default function SummaryPage({
         </div>
 
         {/* SECTION 3: DEVICE TYPE DISTRIBUTION (Full Width) */}
-        <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col justify-between shadow-xs flex-1">
+        <div className="bg-white border border-slate-100 rounded-xl p-4 shadow-xs space-y-3">
           <div>
-            <div className="flex items-center gap-2 border-b border-slate-50 pb-2 mb-2">
-              <Monitor className="h-4 w-4 text-blue-500" />
-              <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-wider">{t.deviceTypeBreakdown}</h4>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5 mb-2">
+              <div className="flex items-center gap-2">
+                <Monitor className="h-4 w-4 text-blue-500" />
+                <h4 className="text-[10px] font-black text-slate-800 uppercase tracking-wider">{t.deviceTypeBreakdown}</h4>
+              </div>
+              <span className="text-[8.5px] font-bold text-slate-500 bg-slate-50 border border-slate-200/60 rounded-full px-2.5 py-0.5">
+                {lang === 'th' ? `รวม RMM Agents ทั้งหมด ${totalDevices} เครื่องในระบบ` : `Total ${totalDevices} Managed RMM Agents`}
+              </span>
             </div>
 
-            <table className="min-w-full text-[9.5px] text-left text-slate-700">
+            <table className="min-w-full text-[10px] text-left text-slate-700">
               <thead>
                 <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[8px]">
-                  <th className="pb-1.5 w-[50%]">{t.deviceType}</th>
-                  <th className="pb-1.5 text-center w-[20%]">{lang === 'th' ? 'จำนวน' : 'Count'}</th>
-                  <th className="pb-1.5 text-right w-[30%]">{t.ratio}</th>
+                  <th className="pb-2 w-[45%]">{t.deviceType}</th>
+                  <th className="pb-2 text-center w-[20%]">{lang === 'th' ? 'จำนวน (เครื่อง)' : 'COUNT'}</th>
+                  <th className="pb-2 text-right w-[35%]">{t.ratio}</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-slate-100">
                 {deviceTypeBreakdown.length > 0 ? (
                   deviceTypeBreakdown.map(([label, count]) => {
                     const percentage = totalDeviceCount > 0 ? Math.round((count / totalDeviceCount) * 1000) / 10 : 0;
@@ -223,7 +231,7 @@ export default function SummaryPage({
                     const getTranslatedLabel = (rawLabel: string) => {
                       if (lang !== 'th') return rawLabel;
                       const low = rawLabel.toLowerCase();
-                      if (low.includes('workstation') || low.includes('desktop') || low.includes('laptop') || low === 'pc') return 'เครื่องผู้ใช้ทั่วไป (Workstation)';
+                      if (low.includes('workstation') || low.includes('desktop') || low.includes('laptop') || low === 'pc') return 'เครื่องผู้ใช้ทั่วไป (Workstation / PC)';
                       if (low.includes('server')) return 'เครื่องแม่ข่าย (Server)';
                       if (low.includes('virtual') || low.includes('vm')) return 'เครื่องเสมือน (Virtual Machine)';
                       if (low.includes('network') || low.includes('router') || low.includes('switch')) return 'อุปกรณ์เครือข่าย (Network Device)';
@@ -231,20 +239,24 @@ export default function SummaryPage({
                     };
 
                     return (
-                      <tr key={label} className="align-middle">
-                        <td className="py-3.5 font-bold text-slate-800">
+                      <tr key={label} className="align-middle hover:bg-slate-50/40 transition-colors">
+                        <td className="py-2.5 font-bold text-slate-800">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <DeviceTypeIcon deviceType={label} className="h-4 w-4 flex-shrink-0" />
+                            <DeviceTypeIcon deviceType={label} className="h-4 w-4 text-slate-600 flex-shrink-0" />
                             <span className="truncate" title={label}>{getTranslatedLabel(label)}</span>
                           </div>
                         </td>
-                        <td className="py-3.5 text-center text-slate-800 font-black text-xs">{count}</td>
-                        <td className="py-3.5 text-right">
+                        <td className="py-2.5 text-center text-slate-800 font-black text-xs">
+                          <span className="inline-flex items-center justify-center bg-slate-100 border border-slate-200/60 rounded px-2 py-0.5 text-[9.5px]">
+                            {count}
+                          </span>
+                        </td>
+                        <td className="py-2.5 text-right">
                           <div className="flex items-center justify-end gap-3">
-                            <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="w-28 h-2 bg-slate-100 rounded-full overflow-hidden">
                               <div className="h-full rounded-full bg-blue-500" style={{ width: `${Math.min(percentage, 100)}%` }} />
                             </div>
-                            <span className="w-10 text-right text-slate-800 font-black text-xs">{percentage}%</span>
+                            <span className="w-11 text-right text-slate-800 font-black text-xs">{percentage}%</span>
                           </div>
                         </td>
                       </tr>
@@ -252,18 +264,14 @@ export default function SummaryPage({
                   })
                 ) : (
                   <tr>
-                    <td className="py-3.5 text-slate-400 font-semibold">{lang === 'th' ? 'ไม่มีข้อมูลอุปกรณ์' : 'No device type data'}</td>
-                    <td className="py-3.5 text-center text-slate-800 font-black">0</td>
-                    <td className="py-3.5 text-right text-slate-700 font-bold">0%</td>
+                    <td className="py-4 text-slate-400 font-semibold">{lang === 'th' ? 'ไม่มีข้อมูลอุปกรณ์' : 'No device type data'}</td>
+                    <td className="py-4 text-center text-slate-800 font-black">0</td>
+                    <td className="py-4 text-right text-slate-700 font-bold">0%</td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
-          
-          <p className="text-[8px] text-slate-400 font-bold uppercase leading-none mt-4">
-            รวม RMM Agents ทั้งหมด {totalDevices} เครื่องในระบบ
-          </p>
         </div>
 
 

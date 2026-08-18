@@ -110,7 +110,7 @@ export default function AlertsPage({
           <StatCard
             label="System Status"
             value={
-              <span className={criticalAlerts > 0 ? 'text-rose-700' : 'text-emerald-700'}>
+              <span className={`text-[13px] font-black leading-tight block truncate ${criticalAlerts > 0 ? 'text-rose-700' : 'text-emerald-700'}`}>
                 {criticalAlerts > 0 ? 'Attention Required' : 'Stable'}
               </span>
             }

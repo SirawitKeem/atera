@@ -228,21 +228,21 @@ body {
 /* Shared report UI primitives */
 .report-stat-card {
   display: flex;
-  min-height: 4.625rem;
+  min-height: 5.25rem;
   flex-direction: column;
   justify-content: space-between;
   border: 1px solid var(--report-border);
   border-radius: 0.75rem;
-  padding: var(--report-space-2);
+  padding: 0.75rem;
   background: var(--report-surface);
   box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
 }
 .report-stat-card__header { display: flex; align-items: center; justify-content: space-between; gap: var(--report-space-2); }
-.report-stat-card__label { color: var(--report-muted); font-size: var(--report-font-caption); font-weight: 800; letter-spacing: 0.05em; line-height: 1; text-transform: uppercase; }
+.report-stat-card__label { color: var(--report-muted); font-size: 0.6875rem; font-weight: 800; letter-spacing: 0.05em; line-height: 1; text-transform: uppercase; }
 .report-stat-card__icon { display: inline-flex; color: var(--report-heading); }
-.report-stat-card__icon > svg { width: 0.875rem; height: 0.875rem; }
-.report-stat-card__value { color: var(--report-heading); font-size: var(--report-font-heading); font-weight: 900; line-height: 1; }
-.report-stat-card__detail { margin: var(--report-space-1) 0 0; color: var(--report-muted); font-size: var(--report-font-caption); font-weight: 700; text-transform: uppercase; }
+.report-stat-card__icon > svg { width: 1.125rem; height: 1.125rem; }
+.report-stat-card__value { color: var(--report-heading); font-size: 1.125rem; font-weight: 900; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.report-stat-card__detail { margin: var(--report-space-1) 0 0; color: var(--report-muted); font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; }
 .report-stat-card--critical .report-stat-card__icon { color: var(--severity-critical); }
 .report-stat-card--important .report-stat-card__icon { color: var(--severity-important); }
 .report-stat-card--moderate .report-stat-card__icon { color: var(--severity-moderate); }

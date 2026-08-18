@@ -180,7 +180,8 @@ export default function PatchesPage({
       kbId: p.kbId,
       classification: p.classification,
       severity: p.severity,
-      affectedCount: p.affectedDevices.size
+      affectedCount: p.affectedDevices.size,
+      devices: Array.from(p.affectedDevices)
     }))
     .filter(p => p.kbId && p.kbId !== 'N/A')
     .sort((a, b) => b.affectedCount - a.affectedCount);
@@ -214,9 +215,9 @@ export default function PatchesPage({
       <div className="page-content space-y-3.5 flex-1 flex flex-col justify-between overflow-hidden mt-3">
         
         {/* SECTION 1: SYSTEM KPI CARDS */}
-        <div className="grid grid-cols-5 gap-2 ">
+        <div className="grid grid-cols-5 gap-2.5">
           {/* Card 1: Total OS Patches */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[64px]">
+          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[72px]">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
                 {lang === 'th' ? 'OS PATCH ทั้งหมด' : 'TOTAL OS PATCHES'}
@@ -226,13 +227,13 @@ export default function PatchesPage({
             <div>
               <h4 className="text-lg font-black text-slate-800 leading-none">
                 <span className="text-blue-700">{totalOSPatches}</span>{' '}
-                <span className="text-[12px] font-bold text-slate-500">{lang === 'th' ? 'รายการ' : 'Patches'}</span>
+                <span className="text-[11px] font-bold text-slate-500">{lang === 'th' ? 'รายการ' : 'Patches'}</span>
               </h4>
             </div>
           </div>
 
           {/* Card 2: Installed Patches */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[64px]">
+          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[72px]">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
                 {lang === 'th' ? 'ติดตั้งแล้ว (Installed)' : 'INSTALLED PATCHES'}
@@ -242,13 +243,13 @@ export default function PatchesPage({
             <div>
               <h4 className="text-lg font-black text-slate-800 leading-none">
                 <span className="text-emerald-700">{totalInstalledPatches}</span>{' '}
-                <span className="text-[12px] font-bold text-slate-500">{lang === 'th' ? 'รายการ' : 'Patches'}</span>
+                <span className="text-[11px] font-bold text-slate-500">{lang === 'th' ? 'รายการ' : 'Patches'}</span>
               </h4>
             </div>
           </div>
 
           {/* Card 3: Pending Patches */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[64px]">
+          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[72px]">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
                 {lang === 'th' ? 'ค้างอัปเดต (Pending)' : 'PENDING PATCHES'}
@@ -258,13 +259,13 @@ export default function PatchesPage({
             <div>
               <h4 className="text-lg font-black text-slate-800 leading-none">
                 <span className="text-amber-700">{totalPendingPatches}</span>{' '}
-                <span className="text-[12px] font-bold text-slate-500">{lang === 'th' ? 'รายการ' : 'Patches'}</span>
+                <span className="text-[11px] font-bold text-slate-500">{lang === 'th' ? 'รายการ' : 'Patches'}</span>
               </h4>
             </div>
           </div>
 
           {/* Card 4: OS Patch Failed */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[64px]">
+          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[72px]">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
                 {lang === 'th' ? 'ติดตั้งล้มเหลว (Failed)' : 'OS PATCH FAILED'}
@@ -274,13 +275,13 @@ export default function PatchesPage({
             <div>
               <h4 className="text-lg font-black text-slate-800 leading-none">
                 <span className="text-rose-700">{totalFailedPatches}</span>{' '}
-                <span className="text-[12px] font-bold text-slate-500">{lang === 'th' ? 'รายการ' : 'Patches'}</span>
+                <span className="text-[11px] font-bold text-slate-500">{lang === 'th' ? 'รายการ' : 'Patches'}</span>
               </h4>
             </div>
           </div>
 
           {/* Card 5: Devices Pending */}
-          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[64px]">
+          <div className="bg-white border border-slate-100 rounded-xl p-3 flex flex-col justify-between shadow-xs h-[72px]">
             <div className="flex items-center justify-between">
               <span className="text-[7.5px] font-extrabold text-slate-400 uppercase tracking-wider block leading-none">
                 {lang === 'th' ? 'อุปกรณ์ค้างติดตั้ง' : 'DEVICES PENDING'}
@@ -290,7 +291,7 @@ export default function PatchesPage({
             <div>
               <h4 className="text-lg font-black text-slate-800 leading-none">
                 <span className="text-indigo-700">{uniqueDevicesNeedingUpdates}</span>{' '}
-                <span className="text-[12px] font-bold text-slate-500">{lang === 'th' ? 'เครื่อง' : 'Devices'}</span>
+                <span className="text-[11px] font-bold text-slate-500">{lang === 'th' ? 'เครื่อง' : 'Devices'}</span>
               </h4>
             </div>
           </div>
@@ -397,42 +398,58 @@ export default function PatchesPage({
         </div>
 
         {/* SECTION 3: SYSTEM PENDING PATCHES DETAILS TABLE */}
-        <div className="space-y-1.5 flex-1 flex flex-col justify-end">
-          <div className="flex flex-col mb-1">
-            <h3 className="text-[9px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <Server className="h-3.5 w-3.5 text-blue-500" />
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-[9.5px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+              <Server className="h-4 w-4 text-blue-500" />
               <span>{lang === 'th' ? '3. รายละเอียดแพตช์ระบบปฏิบัติการที่ค้างการติดตั้ง (Pending OS Patches Details)' : '3. PENDING OS PATCHES DETAILS'}</span>
             </h3>
+            <span className="text-[8.5px] font-bold text-slate-400">
+              {lang === 'th' ? `แสดง ${Math.min(pendingOSPatchesDetails.length, 15)} จาก ${pendingOSPatchesDetails.length} รายการ` : `Showing ${Math.min(pendingOSPatchesDetails.length, 15)} of ${pendingOSPatchesDetails.length}`}
+            </span>
           </div>
           
-          <div className="border border-slate-100 rounded-lg overflow-hidden bg-white/70 backdrop-blur-xs shadow-xs flex-1">
+          <div className="border border-slate-100 rounded-lg overflow-hidden bg-white/70 backdrop-blur-xs shadow-xs">
             <table className="min-w-full divide-y divide-slate-100 text-[9.5px] text-left">
-              <thead className="bg-[#0f4c81] text-white font-bold uppercase tracking-wider text-[7px]">
+              <thead className="bg-[#0f4c81] text-white font-bold uppercase tracking-wider text-[7.5px]">
                 <tr>
-                  <th className="px-4 py-2 w-[45%]">PATCH TITLE</th>
-                  <th className="px-4 py-2 w-[15%]">KB / ARTICLE</th>
-                  <th className="px-4 py-2 text-center w-[12%]">SEVERITY</th>
-                  <th className="px-4 py-2 w-[18%]">CLASSIFICATION</th>
-                  <th className="px-4 py-2 text-right w-[10%]">PENDING DEVICES</th>
+                  <th className="px-3.5 py-2 w-[36%]">PATCH TITLE</th>
+                  <th className="px-3.5 py-2 w-[14%]">KB / ARTICLE</th>
+                  <th className="px-3.5 py-2 text-center w-[12%]">SEVERITY</th>
+                  <th className="px-3.5 py-2 w-[18%]">CLASSIFICATION</th>
+                  <th className="px-3.5 py-2 text-right w-[20%]">{lang === 'th' ? 'อุปกรณ์ที่ค้างอัปเดต' : 'AFFECTED DEVICES'}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-semibold bg-white/50">
-                {pendingOSPatchesDetails.slice(0, 11).map((p, idx) => {
+                {pendingOSPatchesDetails.slice(0, 15).map((p, idx) => {
                   return (
-                    <tr key={idx} className="hover:bg-slate-50/20 transition-colors">
-                      <td className="px-4 py-2 font-bold text-slate-800 truncate max-w-[250px]" title={p.title}>{p.title}</td>
-                      <td className="px-4 py-2 font-mono text-slate-500 font-bold">{p.kbId}</td>
-                      <td className="px-4 py-2 text-center">
+                    <tr key={idx} className="hover:bg-slate-50/20 transition-colors align-middle">
+                      <td className="px-3.5 py-1.5 font-bold text-slate-800 truncate max-w-[220px]" title={p.title}>{p.title}</td>
+                      <td className="px-3.5 py-1.5 font-mono text-slate-500 font-bold">{p.kbId}</td>
+                      <td className="px-3.5 py-1.5 text-center">
                         <span className={`inline-flex items-center rounded px-2 py-0.5 text-[8px] font-extrabold border ${
                           p.severity === 'High' ? 'bg-rose-50 text-rose-600 border-rose-200' :
                           p.severity === 'Medium' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                          'bg-slate-50 text-slate-500 border-slate-205'
+                          'bg-slate-50 text-slate-500 border-slate-200'
                         }`}>
                           {p.severity}
                         </span>
                       </td>
-                      <td className="px-4 py-2 text-slate-550 truncate max-w-[120px]" title={p.classification}>{p.classification}</td>
-                      <td className="px-4 py-2 text-right font-black text-rose-650">{p.affectedCount}</td>
+                      <td className="px-3.5 py-1.5 text-slate-550 truncate max-w-[110px]" title={p.classification}>{p.classification}</td>
+                      <td className="px-3.5 py-1.5 text-right">
+                        <div className="flex items-center gap-1 justify-end whitespace-nowrap overflow-hidden">
+                          {p.devices.slice(0, 2).map((dev: string, dIdx: number) => (
+                            <span key={dIdx} className="inline-flex rounded border border-rose-200 bg-rose-50 text-rose-700 text-[8px] font-bold px-1.5 py-0.5 truncate max-w-[85px]" title={dev}>
+                              {dev}
+                            </span>
+                          ))}
+                          {p.devices.length > 2 && (
+                            <span className="text-[8px] text-slate-400 font-bold flex-shrink-0">
+                              +{p.devices.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
